@@ -41,6 +41,9 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: src-tauri
+          # A PR-branch cache is readable only from that branch, so saving one
+          # just evicts main's.
+          save-if: ${{ github.ref == 'refs/heads/main' }}
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - run: cargo check --manifest-path src-tauri/Cargo.toml
