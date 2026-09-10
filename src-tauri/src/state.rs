@@ -5,13 +5,6 @@ pub const OVERLAY_LABEL: &str = "overlay";
 pub const OVERLAY_DEFAULT_WIDTH: u32 = 400;
 pub const OVERLAY_DEFAULT_HEIGHT: u32 = 300;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
-#[serde(rename_all = "lowercase")]
-pub enum OverlayVisibility {
-    Hidden,
-    Visible,
-}
-
 #[derive(Debug, Clone, Copy, Serialize)]
 pub struct OverlayStatus {
     pub visible: bool,
@@ -44,7 +37,6 @@ pub struct HotkeyStatus {
 }
 
 pub struct AppState {
-    pub visibility: Mutex<OverlayVisibility>,
     pub geometry: Mutex<Option<OverlayGeometry>>,
     pub hotkey_error: Mutex<Option<String>>,
 }
@@ -52,7 +44,6 @@ pub struct AppState {
 impl AppState {
     pub fn new() -> Self {
         Self {
-            visibility: Mutex::new(OverlayVisibility::Hidden),
             geometry: Mutex::new(None),
             hotkey_error: Mutex::new(None),
         }

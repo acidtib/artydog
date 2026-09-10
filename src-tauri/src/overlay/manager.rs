@@ -7,7 +7,7 @@ use tauri::{AppHandle, Manager, PhysicalPosition, PhysicalSize};
 
 use super::{OverlayController, OverlayResult};
 use crate::platform;
-use crate::state::{AppState, OverlayGeometry, OverlayVisibility, OVERLAY_LABEL};
+use crate::state::{AppState, OverlayGeometry, OVERLAY_LABEL};
 
 pub struct OverlayManager {
     app: AppHandle,
@@ -26,14 +26,6 @@ impl OverlayManager {
 
     fn state(&self) -> OverlayResult<tauri::State<'_, AppState>> {
         Ok(self.app.state::<AppState>())
-    }
-
-    fn mirror_visibility(&self, visibility: OverlayVisibility) {
-        if let Ok(state) = self.state() {
-            if let Ok(mut guard) = state.visibility.lock() {
-                *guard = visibility;
-            }
-        }
     }
 
     fn restore_or_capture_geometry(&self, window: &tauri::WebviewWindow) -> OverlayResult<()> {
@@ -83,16 +75,23 @@ impl OverlayController for OverlayManager {
         if let Err(e) = self.focus() {
             eprintln!("[overlay] overlay shown but focus was declined: {e}");
         }
-        self.mirror_visibility(OverlayVisibility::Visible);
         Ok(())
     }
 
     fn hide(&self) -> OverlayResult<()> {
         let window = self.window()?;
+        // Snapshot geometry before hiding so the next show() restores where
+        // the user actually left the window, not a stale position.
+        if let Ok(current) = self.geometry() {
+            if let Ok(state) = self.state() {
+                if let Ok(mut guard) = state.geometry.lock() {
+                    *guard = Some(current);
+                }
+            }
+        }
         window
             .hide()
             .map_err(|e| format!("failed to hide overlay: {e}"))?;
-        self.mirror_visibility(OverlayVisibility::Hidden);
         Ok(())
     }
 

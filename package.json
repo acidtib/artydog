@@ -2,7 +2,7 @@
   "name": "potato",
   "private": true,
   "version": "0.1.0",
-  "description": "Potato - desktop app with game overlay (Phase 1: overlay architecture proof)",
+  "description": "Potato - desktop app with game overlay",
   "type": "module",
   "scripts": {
     "dev": "vite",
