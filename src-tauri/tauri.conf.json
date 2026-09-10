@@ -24,6 +24,8 @@
         "url": "overlay.html",
         "width": 400,
         "height": 300,
+        "minWidth": 280,
+        "minHeight": 200,
         "center": true,
         "visible": false,
         "decorations": false,

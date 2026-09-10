@@ -3,13 +3,22 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import Overlay from "./Overlay";
 
 const invokeMock = vi.fn();
+const startResizeDraggingMock = vi.fn();
 
 vi.mock("@tauri-apps/api/core", () => ({
   invoke: (...args: unknown[]) => invokeMock(...args),
 }));
 
+vi.mock("@tauri-apps/api/window", () => ({
+  getCurrentWindow: () => ({
+    startResizeDragging: (...args: unknown[]) => startResizeDraggingMock(...args),
+  }),
+}));
+
 beforeEach(() => {
   invokeMock.mockReset();
+  startResizeDraggingMock.mockReset();
+  startResizeDraggingMock.mockResolvedValue(undefined);
   invokeMock.mockImplementation((command: string) => {
     if (command === "hide_overlay") {
       return Promise.resolve({ visible: false });
@@ -49,4 +58,22 @@ it("test button counts clicks", () => {
   fireEvent.click(button);
 
   expect(screen.getByRole("button", { name: "Test Button (2)" })).toBeInTheDocument();
+});
+
+it("the title bar is a drag region", () => {
+  const { container } = render(<Overlay />);
+
+  const dragRegion = container.querySelector("[data-tauri-drag-region]");
+  expect(dragRegion).not.toBeNull();
+  expect(dragRegion).toHaveTextContent("ARTYDOG");
+});
+
+it("the corner grip starts a resize", async () => {
+  render(<Overlay />);
+
+  fireEvent.mouseDown(screen.getByRole("button", { name: "Resize overlay" }));
+
+  await vi.waitFor(() => {
+    expect(startResizeDraggingMock).toHaveBeenCalledWith("SouthEast");
+  });
 });
