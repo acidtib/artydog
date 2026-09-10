@@ -10,12 +10,12 @@ use crate::overlay::{OverlayController, OverlayManager};
 
 pub const TOGGLE_SHORTCUT_LABEL: &str = "M";
 
-fn toggle_shortcut() -> Result<Shortcut, String> {
-    Ok(Shortcut::new(None, Code::KeyM))
+fn toggle_shortcut() -> Shortcut {
+    Shortcut::new(None, Code::KeyM)
 }
 
 pub fn register_toggle_shortcut(app: &AppHandle) -> Result<(), String> {
-    let shortcut = toggle_shortcut()?;
+    let shortcut = toggle_shortcut();
     app.global_shortcut().register(shortcut).map_err(|e| {
         format!(
             "failed to register global shortcut \"{TOGGLE_SHORTCUT_LABEL}\": {e}. \
@@ -32,8 +32,5 @@ pub fn handle_hotkey(app: &AppHandle) {
 }
 
 pub fn hotkey_registered(app: &AppHandle) -> bool {
-    match toggle_shortcut() {
-        Ok(shortcut) => app.global_shortcut().is_registered(shortcut),
-        Err(_) => false,
-    }
+    app.global_shortcut().is_registered(toggle_shortcut())
 }
