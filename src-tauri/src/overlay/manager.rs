@@ -6,8 +6,11 @@
 use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize};
 
 use super::{OverlayController, OverlayResult, OVERLAY_VISIBILITY_EVENT};
+use crate::config;
 use crate::platform;
-use crate::state::{AppState, OverlayGeometry, OverlayStatus, MAIN_LABEL, OVERLAY_LABEL};
+use crate::state::{
+    AppState, MonitorRect, OverlayGeometry, OverlayStatus, MAIN_LABEL, OVERLAY_LABEL,
+};
 
 pub struct OverlayManager {
     app: AppHandle,
@@ -39,33 +42,92 @@ impl OverlayManager {
         }
     }
 
+    /// Monitors with the primary first, which is where a lost overlay is
+    /// recovered to.
+    fn monitors(window: &tauri::WebviewWindow) -> Vec<MonitorRect> {
+        let rect = |monitor: &tauri::Monitor| MonitorRect {
+            x: monitor.position().x,
+            y: monitor.position().y,
+            width: monitor.size().width,
+            height: monitor.size().height,
+        };
+        let primary = window.primary_monitor().ok().flatten().map(|m| rect(&m));
+        let mut monitors: Vec<MonitorRect> = window
+            .available_monitors()
+            .unwrap_or_default()
+            .iter()
+            .map(rect)
+            .collect();
+        if let Some(primary) = primary {
+            monitors.retain(|m| *m != primary);
+            monitors.insert(0, primary);
+        }
+        monitors
+    }
+
+    fn stored_geometry(&self) -> Option<OverlayGeometry> {
+        self.state()
+            .ok()
+            .and_then(|state| state.geometry.lock().ok().map(|guard| *guard))
+            .flatten()
+    }
+
+    /// Keeps the in-memory geometry current without touching the window or
+    /// the disk; move and resize events arrive far too often to write.
+    pub fn record_geometry(&self, geometry: OverlayGeometry) {
+        if let Ok(state) = self.state() {
+            if let Ok(mut guard) = state.geometry.lock() {
+                *guard = Some(geometry);
+            }
+        }
+    }
+
+    /// Best-effort: a failed write is logged, never fatal.
+    fn persist_geometry(&self, geometry: OverlayGeometry) {
+        self.record_geometry(geometry);
+        if let Err(e) = config::save_overlay_geometry(&self.app, geometry) {
+            eprintln!("[overlay] failed to save geometry: {e}");
+        }
+    }
+
+    /// Writes whatever geometry is currently held. Call before quitting.
+    pub fn flush_geometry(&self) {
+        if let Some(geometry) = self.stored_geometry() {
+            if let Err(e) = config::save_overlay_geometry(&self.app, geometry) {
+                eprintln!("[overlay] failed to save geometry: {e}");
+            }
+        }
+    }
+
+    /// Default size centered on the primary monitor: the way back when the
+    /// overlay ends up somewhere the user cannot grab it.
+    pub fn reset_geometry(&self) -> OverlayResult<OverlayGeometry> {
+        let window = self.window()?;
+        let defaults = OverlayGeometry::defaults();
+        let target = match Self::monitors(&window).first() {
+            Some(primary) => defaults.centered_in(*primary),
+            None => defaults,
+        };
+        self.set_size(target.width, target.height)?;
+        self.set_position(target.x, target.y)?;
+        Ok(target)
+    }
+
     fn restore_or_capture_geometry(&self, window: &tauri::WebviewWindow) -> OverlayResult<()> {
-        let stored = self
-            .state()
-            .and_then(|state| {
-                state
-                    .geometry
-                    .lock()
-                    .map_err(|e| format!("overlay geometry lock poisoned: {e}"))
-                    .map(|guard| *guard)
-            })
-            .unwrap_or(None);
-        match stored {
+        match self.stored_geometry() {
             Some(saved) => {
+                let target = saved.clamped_to(&Self::monitors(window));
                 window
-                    .set_size(PhysicalSize::new(saved.width, saved.height))
+                    .set_size(PhysicalSize::new(target.width, target.height))
                     .map_err(|e| format!("failed to restore overlay size: {e}"))?;
                 window
-                    .set_position(PhysicalPosition::new(saved.x, saved.y))
+                    .set_position(PhysicalPosition::new(target.x, target.y))
                     .map_err(|e| format!("failed to restore overlay position: {e}"))?;
+                self.record_geometry(target);
             }
             None => {
                 if let Ok(current) = self.geometry() {
-                    if let Ok(state) = self.state() {
-                        if let Ok(mut guard) = state.geometry.lock() {
-                            *guard = Some(current);
-                        }
-                    }
+                    self.record_geometry(current);
                 }
             }
         }
@@ -96,11 +158,7 @@ impl OverlayController for OverlayManager {
         // Snapshot geometry before hiding so the next show() restores where
         // the user actually left the window, not a stale position.
         if let Ok(current) = self.geometry() {
-            if let Ok(state) = self.state() {
-                if let Ok(mut guard) = state.geometry.lock() {
-                    *guard = Some(current);
-                }
-            }
+            self.persist_geometry(current);
         }
         window
             .hide()
@@ -121,14 +179,11 @@ impl OverlayController for OverlayManager {
         window
             .set_position(PhysicalPosition::new(x, y))
             .map_err(|e| format!("failed to move overlay: {e}"))?;
-        if let Ok(state) = self.state() {
-            if let Ok(mut guard) = state.geometry.lock() {
-                let current = guard
-                    .unwrap_or_else(OverlayGeometry::defaults)
-                    .merged_position(x, y);
-                *guard = Some(current);
-            }
-        }
+        let current = self
+            .stored_geometry()
+            .unwrap_or_else(OverlayGeometry::defaults)
+            .merged_position(x, y);
+        self.persist_geometry(current);
         Ok(())
     }
 
@@ -137,14 +192,11 @@ impl OverlayController for OverlayManager {
         window
             .set_size(PhysicalSize::new(width, height))
             .map_err(|e| format!("failed to resize overlay: {e}"))?;
-        if let Ok(state) = self.state() {
-            if let Ok(mut guard) = state.geometry.lock() {
-                let current = guard
-                    .unwrap_or_else(OverlayGeometry::defaults)
-                    .merged_size(width, height);
-                *guard = Some(current);
-            }
-        }
+        let current = self
+            .stored_geometry()
+            .unwrap_or_else(OverlayGeometry::defaults)
+            .merged_size(width, height);
+        self.persist_geometry(current);
         Ok(())
     }
 

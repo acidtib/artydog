@@ -68,6 +68,11 @@ pub fn set_overlay_size(
 }
 
 #[tauri::command]
+pub fn reset_overlay_geometry(app: AppHandle) -> Result<OverlayGeometry, String> {
+    OverlayManager::new(app).reset_geometry()
+}
+
+#[tauri::command]
 pub fn get_hotkey_status(
     app: AppHandle,
     state: State<'_, AppState>,

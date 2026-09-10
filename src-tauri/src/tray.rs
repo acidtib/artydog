@@ -59,6 +59,13 @@ fn toggle_overlay(app: &AppHandle) {
     }
 }
 
+/// The overlay's live geometry only reaches disk on hide, so save it before
+/// the process goes away with the overlay still open.
+fn quit(app: &AppHandle) {
+    OverlayManager::new(app.clone()).flush_geometry();
+    app.exit(0);
+}
+
 fn tray_icon(app: &App) -> Result<tauri::image::Image<'_>, String> {
     app.default_window_icon()
         .cloned()
@@ -89,7 +96,7 @@ pub fn build_tray(app: &App) -> Result<(), String> {
         .on_menu_event(|app, event| match event.id().as_ref() {
             MENU_SHOW => toggle_main(app),
             MENU_TOGGLE_OVERLAY => toggle_overlay(app),
-            MENU_QUIT => app.exit(0),
+            MENU_QUIT => quit(app),
             _ => {}
         })
         .on_tray_icon_event(|tray, event| {
