@@ -1,4 +1,4 @@
-# Potato - Overlay Technical Design
+# ArtyDog - Overlay Technical Design
 
 ## Goal
 

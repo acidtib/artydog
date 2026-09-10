@@ -1,4 +1,4 @@
-//! System tray icon: keeps Potato alive while the main window is hidden.
+//! System tray icon: keeps ArtyDog alive while the main window is hidden.
 //!
 //! Closing (or minimizing) the main window hides it to the tray instead of
 //! quitting, so the global `M` shortcut keeps working while gaming. The
@@ -83,7 +83,7 @@ pub fn build_tray(app: &App) -> Result<(), String> {
 
     tauri::tray::TrayIconBuilder::new()
         .icon(tray_icon(app)?)
-        .tooltip("Potato")
+        .tooltip("ArtyDog")
         .menu(&menu)
         .show_menu_on_left_click(false)
         .on_menu_event(|app, event| match event.id().as_ref() {

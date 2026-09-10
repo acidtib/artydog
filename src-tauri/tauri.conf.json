@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Potato",
+  "productName": "ArtyDog",
   "version": "0.1.0",
-  "identifier": "com.acidtib.potato",
+  "identifier": "com.acidtib.artydog",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:1420",
@@ -13,14 +13,14 @@
     "windows": [
       {
         "label": "main",
-        "title": "Potato",
+        "title": "ArtyDog",
         "width": 900,
         "height": 700,
         "resizable": true
       },
       {
         "label": "overlay",
-        "title": "Potato - Overlay",
+        "title": "ArtyDog - Overlay",
         "url": "overlay.html",
         "width": 400,
         "height": 300,

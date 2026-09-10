@@ -1,9 +1,9 @@
-# Potato - Architecture
+# ArtyDog - Architecture
 
 ## 1. High-level architecture
 
 ```text
-                    POTATO
+                    ARTYDOG
                               │
                 ┌─────────────┴─────────────┐
                 │                           │

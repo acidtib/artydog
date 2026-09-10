@@ -1,4 +1,4 @@
-# Potato
+# ArtyDog
 
 Technical implementation plan for a cross-platform desktop mortar calculator that works as:
 
@@ -26,7 +26,7 @@ The application opens like any other desktop application:
 
 ```text
 ┌─────────────────────────────────┐
-│ Potato                        │
+│ ArtyDog                       │
 ├─────────────────────────────────┤
 │ Mortar                          │
 │ X [________]  Y [________]      │

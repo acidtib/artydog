@@ -24,7 +24,7 @@ afterEach(() => {
 
 it("renders the overlay controls", () => {
   render(<Overlay />);
-  expect(screen.getByText("POTATO")).toBeInTheDocument();
+  expect(screen.getByText("ARTYDOG")).toBeInTheDocument();
   expect(
     screen.getByRole("button", { name: "Hide Overlay" }),
   ).toBeInTheDocument();

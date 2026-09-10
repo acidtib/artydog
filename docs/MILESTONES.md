@@ -1,4 +1,4 @@
-# Potato - Implementation Milestones
+# ArtyDog - Implementation Milestones
 
 The project should be implemented in this order.
 

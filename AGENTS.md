@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Potato is a Tauri 2 desktop app: a React/TypeScript frontend over a Rust
+ArtyDog is a Tauri 2 desktop app: a React/TypeScript frontend over a Rust
 backend, running as a normal window or as an interactive overlay over the
 game WARDOGS. Two frontend entry points: the main window
 (`index.html` -> `src/main.tsx` -> `App.tsx`) and the overlay window

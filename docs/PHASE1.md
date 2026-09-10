@@ -54,7 +54,7 @@ Backend (Tauri 2, Rust):
 - `cargo check` - pass, zero warnings. `cargo build` - links cleanly
   against system `webkit2gtk-4.1`.
 - Live run: main window appears and is visible; overlay window exists and
-  starts hidden (verified via window list: `Potato`
+  starts hidden (verified via window list: `ArtyDog`
   visible + second window hidden). Setup log confirms
   `platform: linux`, no hotkey registration error.
 - Manual tests still required by the operator: press `M` with app / overlay /

@@ -1,13 +1,13 @@
 [package]
-name = "potato"
+name = "artydog"
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.77.2"
-description = "Potato - desktop app with interactive game overlay"
+description = "ArtyDog - Instant firing solutions in WARDOGS"
 authors = ["acidtib"]
 
 [lib]
-name = "potato_lib"
+name = "artydog_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

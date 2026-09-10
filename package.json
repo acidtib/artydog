@@ -1,8 +1,8 @@
 {
-  "name": "potato",
+  "name": "artydog",
   "private": true,
   "version": "0.1.0",
-  "description": "Potato - desktop app with game overlay",
+  "description": "ArtyDog - Instant firing solutions in WARDOGS",
   "type": "module",
   "scripts": {
     "dev": "vite",

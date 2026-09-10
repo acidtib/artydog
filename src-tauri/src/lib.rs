@@ -63,7 +63,7 @@ pub fn run() {
         ])
         .setup(|app| {
             eprintln!(
-                "[setup] Potato starting (platform: {})",
+                "[setup] ArtyDog starting (platform: {})",
                 platform::name()
             );
             // The overlay window is declared hidden in tauri.conf.json; make
@@ -96,7 +96,7 @@ pub fn run() {
         })
         .run(tauri::generate_context!())
         .unwrap_or_else(|e| {
-            eprintln!("[fatal] failed to start Potato: {e}");
+            eprintln!("[fatal] failed to start ArtyDog: {e}");
             std::process::exit(1);
         });
 }
