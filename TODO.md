@@ -13,9 +13,9 @@ Follow-ups from the code review. None of these block the current milestone.
 
 ## Frontend
 
-- [ ] Replace 1s polling in `src/App.tsx` with Tauri events emitted from
+- [x] Replace 1s polling in `src/App.tsx` with Tauri events emitted from
   Rust on toggle, so the main window updates instantly with no IPC loop.
-- [ ] Add TS wrappers in `src/lib/overlay.ts` for `set_overlay_position`
+- [x] Add TS wrappers in `src/lib/overlay.ts` for `set_overlay_position`
   / `set_overlay_size` (commands exist in Rust but are unreachable from
   the frontend).
 
@@ -30,9 +30,9 @@ Follow-ups from the code review. None of these block the current milestone.
 
 ## Testing
 
-- [ ] Add at least a few `#[test]`s for pure logic (geometry
+- [x] Add at least a few `#[test]`s for pure logic (geometry
   defaults/merge, toggle decision) and consider frontend component tests
-  for `App` / `Overlay`.
+  for `App` / `Overlay` (vitest + Testing Library, wired into CI).
 
 ## Release hygiene
 

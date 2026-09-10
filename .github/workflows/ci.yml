@@ -2,6 +2,7 @@ name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
 
 jobs:
@@ -16,6 +17,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
+      - run: pnpm test
       - run: pnpm build
 
   rust:
@@ -39,6 +41,10 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: src-tauri
+          # A PR-branch cache is readable only from that branch, so saving one
+          # just evicts main's.
+          save-if: ${{ github.ref == 'refs/heads/main' }}
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - run: cargo check --manifest-path src-tauri/Cargo.toml
+      - run: cargo test --manifest-path src-tauri/Cargo.toml

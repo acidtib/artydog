@@ -1,27 +1,67 @@
-import { useCallback, useEffect, useState } from "react";
-import { getHotkeyStatus, getOverlayState, toggleOverlay, type HotkeyStatus } from "./lib/overlay";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  getHotkeyStatus,
+  getOverlayState,
+  onOverlayVisibilityChanged,
+  toggleOverlay,
+  type HotkeyStatus,
+} from "./lib/overlay";
 
 export default function App() {
   const [visible, setVisible] = useState<boolean | null>(null);
   const [hotkey, setHotkey] = useState<HotkeyStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  const refresh = useCallback(async () => {
-    try {
-      const [status, hotkeyStatus] = await Promise.all([getOverlayState(), getHotkeyStatus()]);
-      setVisible(status.visible);
-      setHotkey(hotkeyStatus);
-      setError(null);
-    } catch (e) {
-      setError(String(e));
-    }
-  }, []);
+  // Guards against a stale initial fetch clobbering an event that arrived
+  // while the fetch was in flight.
+  const eventSeen = useRef(false);
 
   useEffect(() => {
-    void refresh();
-    const timer = window.setInterval(() => void refresh(), 1000);
-    return () => window.clearInterval(timer);
-  }, [refresh]);
+    let cancelled = false;
+    let unlisten: (() => void) | undefined;
+
+        void onOverlayVisibilityChanged((status) => {
+          eventSeen.current = true;
+          setVisible(status.visible);
+        })
+          .then((fn) => {
+            if (cancelled) {
+              fn();
+            } else {
+              unlisten = fn;
+            }
+          })
+          .catch((e) => {
+            if (!cancelled) {
+              setError(String(e));
+            }
+          });
+
+    void (async () => {
+      try {
+        const [status, hotkeyStatus] = await Promise.all([
+          getOverlayState(),
+          getHotkeyStatus(),
+        ]);
+        if (cancelled) {
+          return;
+        }
+        if (!eventSeen.current) {
+          setVisible(status.visible);
+        }
+        setHotkey(hotkeyStatus);
+        setError(null);
+      } catch (e) {
+        if (!cancelled) {
+          setError(String(e));
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      unlisten?.();
+    };
+  }, []);
 
   const onToggle = useCallback(async () => {
     try {
