@@ -37,8 +37,11 @@ the first stable release exists the 404 shows nothing.
 
 Updates must be signed or the app refuses them. The keypair lives at
 `~/.tauri/artydog.key` and the public half is in `tauri.conf.json`. CI signs
-with the repo secrets `TAURI_SIGNING_PRIVATE_KEY` and
-`TAURI_SIGNING_PRIVATE_KEY_PASSWORD` (the password is empty).
+with the repo secret `TAURI_SIGNING_PRIVATE_KEY`.
+
+The key has no password. `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` is referenced
+by the workflow but deliberately not set: an undefined secret resolves to the
+empty string, which is what a passwordless key wants.
 
 **Losing the private key strands every install.** They keep running but can
 never auto-update again, because a new key produces signatures the installed
@@ -55,3 +58,7 @@ by hand. Keep `~/.tauri/artydog.key` backed up.
 - **Windows builds NSIS only**, not MSI. WiX rejects the semver prerelease
   versions the bleeding-edge channel produces, and NSIS is the only Windows
   target the updater can install.
+- **An install predating the updater cannot update itself.** The plugin has
+  to already be in the running app for it to check. Every existing install
+  needs one manual upgrade to a build that includes this, after which
+  updating is automatic.
