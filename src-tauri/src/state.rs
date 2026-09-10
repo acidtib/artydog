@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
 
 pub const OVERLAY_LABEL: &str = "overlay";
+pub const MAIN_LABEL: &str = "main";
 pub const OVERLAY_DEFAULT_WIDTH: u32 = 400;
 pub const OVERLAY_DEFAULT_HEIGHT: u32 = 300;
 
