@@ -18,6 +18,15 @@ vi.mock("@tauri-apps/api/event", () => ({
   listen: (...args: unknown[]) => listenMock(...args),
 }));
 
+// App mounts UpdateBanner, which has no update to show in these tests.
+vi.mock("@tauri-apps/plugin-updater", () => ({
+  check: () => Promise.resolve(null),
+}));
+
+vi.mock("@tauri-apps/plugin-process", () => ({
+  relaunch: () => Promise.resolve(),
+}));
+
 function mockBackend() {
   invokeMock.mockImplementation((command: string) => {
     switch (command) {
