@@ -22,6 +22,14 @@ pnpm build    # tsc --noEmit, then vite build
 cargo test --manifest-path src-tauri/Cargo.toml
 ```
 
+On this KDE Wayland machine the app dies at startup with
+`Gdk-Message: Error 71 (Protocol error) dispatching to Wayland display`
+unless WebKit's DMA-BUF renderer is off:
+
+```bash
+WEBKIT_DISABLE_DMABUF_RENDERER=1 pnpm tauri dev
+```
+
 `cargo check`/`cargo test` in `src-tauri` need `dist/` to exist
 (`tauri.conf.json` points `frontendDist` there), so run `pnpm build` first
 on a fresh checkout. CI does this in its rust job.
