@@ -3,11 +3,11 @@
 //! The overlay window is created once at startup (see `tauri.conf.json`,
 //! `visible: false`) and only shown/hidden here - never destroyed.
 
-use tauri::{AppHandle, Manager, PhysicalPosition, PhysicalSize};
+use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize};
 
-use super::{OverlayController, OverlayResult};
+use super::{OverlayController, OverlayResult, OVERLAY_VISIBILITY_EVENT};
 use crate::platform;
-use crate::state::{AppState, OverlayGeometry, OVERLAY_LABEL};
+use crate::state::{AppState, OverlayGeometry, OverlayStatus, MAIN_LABEL, OVERLAY_LABEL};
 
 pub struct OverlayManager {
     app: AppHandle,
@@ -26,6 +26,17 @@ impl OverlayManager {
 
     fn state(&self) -> OverlayResult<tauri::State<'_, AppState>> {
         Ok(self.app.state::<AppState>())
+    }
+
+    /// Best-effort: a failed emit is logged, never fatal.
+    fn emit_visibility(&self, visible: bool) {
+        if let Err(e) = self.app.emit_to(
+            MAIN_LABEL,
+            OVERLAY_VISIBILITY_EVENT,
+            OverlayStatus { visible },
+        ) {
+            eprintln!("[overlay] failed to emit visibility event: {e}");
+        }
     }
 
     fn restore_or_capture_geometry(&self, window: &tauri::WebviewWindow) -> OverlayResult<()> {
@@ -69,6 +80,8 @@ impl OverlayController for OverlayManager {
         window
             .show()
             .map_err(|e| format!("failed to show overlay: {e}"))?;
+        // The window is visible from here on, even if a later step fails.
+        self.emit_visibility(true);
         platform::after_show(&window)?;
         // Activation is best-effort: on Wayland the compositor may decline
         // focus while still showing the window above the game.
@@ -92,15 +105,8 @@ impl OverlayController for OverlayManager {
         window
             .hide()
             .map_err(|e| format!("failed to hide overlay: {e}"))?;
+        self.emit_visibility(false);
         Ok(())
-    }
-
-    fn toggle(&self) -> OverlayResult<()> {
-        if self.is_visible()? {
-            self.hide()
-        } else {
-            self.show()
-        }
     }
 
     fn is_visible(&self) -> OverlayResult<bool> {
@@ -117,9 +123,9 @@ impl OverlayController for OverlayManager {
             .map_err(|e| format!("failed to move overlay: {e}"))?;
         if let Ok(state) = self.state() {
             if let Ok(mut guard) = state.geometry.lock() {
-                let mut current = guard.unwrap_or_else(OverlayGeometry::defaults);
-                current.x = x;
-                current.y = y;
+                let current = guard
+                    .unwrap_or_else(OverlayGeometry::defaults)
+                    .merged_position(x, y);
                 *guard = Some(current);
             }
         }
@@ -133,9 +139,9 @@ impl OverlayController for OverlayManager {
             .map_err(|e| format!("failed to resize overlay: {e}"))?;
         if let Ok(state) = self.state() {
             if let Ok(mut guard) = state.geometry.lock() {
-                let mut current = guard.unwrap_or_else(OverlayGeometry::defaults);
-                current.width = width;
-                current.height = height;
+                let current = guard
+                    .unwrap_or_else(OverlayGeometry::defaults)
+                    .merged_size(width, height);
                 *guard = Some(current);
             }
         }
