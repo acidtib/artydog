@@ -35,7 +35,9 @@ it("solves the reference vector entered through the form", () => {
   expect(rowValue("Elevation")).toBe("461 mil");
 });
 
-it("submits on Enter from a coordinate field", () => {
+// jsdom does not implement implicit submission, so this covers the form
+// submit path rather than an actual Enter keypress.
+it("calculates when the form is submitted rather than clicked", () => {
   render(<Calculator />);
 
   setPoint("Mortar", "50", "50");
@@ -98,6 +100,31 @@ it("flags a target outside the weapon range", () => {
   expect(rowValue("Distance")).toBe("1000 m");
   expect(screen.getByRole("status")).toHaveTextContent(
     "Out of range for L81 Mortar",
+  );
+});
+
+it("keeps the other axis error when one axis is fixed", () => {
+  render(<Calculator />);
+
+  setPoint("Mortar", "", "");
+  setPoint("Target", "53", "54");
+  calculate();
+
+  const mortar = screen.getByRole("group", { name: "Mortar" });
+  expect(within(mortar).getAllByText("Required")).toHaveLength(2);
+
+  fireEvent.change(within(mortar).getByLabelText("x"), {
+    target: { value: "50" },
+  });
+
+  expect(within(mortar).getAllByText("Required")).toHaveLength(1);
+  expect(within(mortar).getByLabelText("y")).toHaveAttribute(
+    "aria-invalid",
+    "true",
+  );
+  expect(within(mortar).getByLabelText("x")).toHaveAttribute(
+    "aria-invalid",
+    "false",
   );
 });
 

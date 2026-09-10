@@ -1,4 +1,11 @@
-import { useCallback, useMemo, useState, type FormEvent } from "react";
+import {
+  useCallback,
+  useMemo,
+  useState,
+  type Dispatch,
+  type SyntheticEvent,
+  type SetStateAction,
+} from "react";
 import { solve } from "../calculator/solution";
 import type { Solution } from "../calculator/types";
 import { parsePoint, type PointErrors } from "../calculator/validation";
@@ -21,22 +28,32 @@ export default function Calculator() {
     [weaponId],
   );
 
-  // A solution belongs to the inputs it came from, so any edit drops it.
+  // A solution belongs to the inputs it came from, so any edit drops it. The
+  // other axis keeps its error, which is still true until it is edited too.
   const editPoint = useCallback(
     (
-      setPoint: (update: (previous: PointText) => PointText) => void,
-      setErrors: (errors: PointErrors) => void,
+      setPoint: Dispatch<SetStateAction<PointText>>,
+      setErrors: Dispatch<SetStateAction<PointErrors>>,
     ) =>
       (axis: keyof PointText, value: string) => {
         setPoint((previous) => ({ ...previous, [axis]: value }));
-        setErrors({});
+        setErrors((previous) => {
+          if (previous[axis] === undefined) {
+            return previous;
+          }
+
+          const next = { ...previous };
+          delete next[axis];
+
+          return next;
+        });
         setSolution(null);
       },
     [],
   );
 
   const onSubmit = useCallback(
-    (event: FormEvent) => {
+    (event: SyntheticEvent) => {
       event.preventDefault();
 
       const parsedMortar = parsePoint(mortar.x, mortar.y);
