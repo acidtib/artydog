@@ -3,6 +3,7 @@ import {
   getHotkeyStatus,
   getOverlayState,
   onOverlayVisibilityChanged,
+  resetOverlayGeometry,
   toggleOverlay,
   type HotkeyStatus,
 } from "../lib/overlay";
@@ -73,6 +74,15 @@ export default function OverlayControls() {
     }
   }, []);
 
+  const onReset = useCallback(async () => {
+    try {
+      await resetOverlayGeometry();
+      setError(null);
+    } catch (e) {
+      setError(String(e));
+    }
+  }, []);
+
   return (
     <div className="rounded border border-neutral-800 bg-neutral-950 p-4">
       <p className="text-sm text-neutral-300">
@@ -87,13 +97,22 @@ export default function OverlayControls() {
         </p>
       )}
       {error !== null && <p className="mt-3 text-sm text-red-400">{error}</p>}
-      <button
-        type="button"
-        onClick={() => void onToggle()}
-        className="mt-4 rounded bg-neutral-700 px-4 py-2 text-sm font-semibold hover:bg-neutral-600"
-      >
-        Toggle Overlay
-      </button>
+      <div className="mt-4 flex gap-2">
+        <button
+          type="button"
+          onClick={() => void onToggle()}
+          className="rounded bg-neutral-700 px-4 py-2 text-sm font-semibold hover:bg-neutral-600"
+        >
+          Toggle Overlay
+        </button>
+        <button
+          type="button"
+          onClick={() => void onReset()}
+          className="rounded bg-neutral-800 px-4 py-2 text-sm hover:bg-neutral-700"
+        >
+          Reset Position
+        </button>
+      </div>
     </div>
   );
 }

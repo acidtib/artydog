@@ -55,6 +55,12 @@ export async function setOverlaySize(
   return invoke<OverlayGeometry>("set_overlay_size", { width, height });
 }
 
+/// Default size, centered on the primary monitor. The escape hatch for an
+/// overlay that ended up somewhere the user cannot reach.
+export async function resetOverlayGeometry(): Promise<OverlayGeometry> {
+  return invoke<OverlayGeometry>("reset_overlay_geometry");
+}
+
 export async function getHotkeyStatus(): Promise<HotkeyStatus> {
   return invoke<HotkeyStatus>("get_hotkey_status");
 }

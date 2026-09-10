@@ -26,6 +26,8 @@ function mockBackend() {
         return Promise.resolve({ visible: false });
       case "get_hotkey_status":
         return Promise.resolve({ shortcut: "M", registered: true, error: null });
+      case "reset_overlay_geometry":
+        return Promise.resolve({ x: 760, y: 390, width: 400, height: 300 });
       default:
         return Promise.reject(new Error(`unexpected command: ${command}`));
     }
@@ -152,5 +154,15 @@ it("toggle button invokes toggle_overlay and reflects the new status", async () 
   await screen.findByText(/Overlay status: Visible/);
   await waitFor(() => {
     expect(invokeMock.mock.calls.some((call) => call[0] === "toggle_overlay")).toBe(true);
+  });
+});
+
+it("reset position invokes reset_overlay_geometry", async () => {
+  await renderSettled();
+
+  fireEvent.click(screen.getByRole("button", { name: "Reset Position" }));
+
+  await waitFor(() => {
+    expect(invokeMock).toHaveBeenCalledWith("reset_overlay_geometry");
   });
 });
