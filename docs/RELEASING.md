@@ -48,6 +48,63 @@ never auto-update again, because a new key produces signatures the installed
 public key rejects. Recovery means every user downloading a fresh installer
 by hand. Keep `~/.tauri/artydog.key` backed up.
 
+## Rotating the signing key
+
+An installed app verifies every download against the public key baked into
+**its own** build, not the one in the latest release. So a release signed
+with a new key is rejected by everything already installed under the old one.
+
+**Before the first stable release** (where the project is now) rotation is
+free, because nothing out there checks signatures yet:
+
+```bash
+pnpm tauri signer generate -w ~/.tauri/artydog.key -f
+gh secret set TAURI_SIGNING_PRIVATE_KEY < ~/.tauri/artydog.key
+```
+
+Then copy `~/.tauri/artydog.key.pub` into `plugins.updater.pubkey` in
+`tauri.conf.json` and commit. The public key is not a secret.
+
+**After installs exist in the wild** it takes a transition release, and the
+old private key has to still be available:
+
+1. Generate the new keypair, keeping the old private key.
+2. Put the **new** public key in `tauri.conf.json`. Leave the CI secret on
+   the **old** private key.
+3. Cut a release. It is signed with the old key, so existing installs accept
+   it, and once installed they carry the new public key.
+4. Now replace `TAURI_SIGNING_PRIVATE_KEY` with the new private key.
+5. Every later release signs with the new key.
+
+Anyone who skips the step 3 release is stranded and has to reinstall by hand,
+since they never picked up the new public key. Keep step 3 available for a
+while rather than deleting it.
+
+## Using a password-protected key
+
+The workflow already passes `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` to both
+jobs, so adding a password needs no workflow change: generate the key with
+one and store it as a secret.
+
+```bash
+pnpm tauri signer generate -w ~/.tauri/artydog.key -f   # prompts for it
+gh secret set TAURI_SIGNING_PRIVATE_KEY < ~/.tauri/artydog.key
+gh secret set TAURI_SIGNING_PRIVATE_KEY_PASSWORD        # prompts, no echo
+```
+
+Let `gh` prompt. `--body ''` hangs waiting on stdin, and `--body 'thepass'`
+leaves the password in shell history and in `ps` output while it runs.
+
+Local release builds then need both:
+
+```bash
+export TAURI_SIGNING_PRIVATE_KEY_PATH=~/.tauri/artydog.key
+export TAURI_SIGNING_PRIVATE_KEY_PASSWORD=...
+pnpm tauri build
+```
+
+A forgotten password is exactly as bad as a lost key: see the warning above.
+
 ## Caveats
 
 - **Linux: only the AppImage self-updates.** `.deb` installs cannot replace
