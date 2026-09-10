@@ -1,4 +1,4 @@
-//! Tauri commands — the only bridge between React and the overlay.
+//! Tauri commands - the only bridge between React and the overlay.
 //!
 //! Flow is always: React -> command -> OverlayManager -> Tauri window.
 

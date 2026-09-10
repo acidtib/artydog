@@ -35,7 +35,7 @@ pub fn run() {
         ])
         .setup(|app| {
             eprintln!(
-                "[setup] WARDOGS Mortar Calculator starting (platform: {})",
+                "[setup] Potato starting (platform: {})",
                 platform::name()
             );
             // The overlay window is declared hidden in tauri.conf.json; make
@@ -64,7 +64,7 @@ pub fn run() {
         })
         .run(tauri::generate_context!())
         .unwrap_or_else(|e| {
-            eprintln!("[fatal] failed to start WARDOGS Mortar Calculator: {e}");
+            eprintln!("[fatal] failed to start Potato: {e}");
             std::process::exit(1);
         });
 }

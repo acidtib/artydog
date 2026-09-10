@@ -1,7 +1,7 @@
 //! Concrete [`OverlayController`] backed by Tauri window APIs.
 //!
 //! The overlay window is created once at startup (see `tauri.conf.json`,
-//! `visible: false`) and only shown/hidden here — never destroyed.
+//! `visible: false`) and only shown/hidden here - never destroyed.
 
 use tauri::{AppHandle, Manager, PhysicalPosition, PhysicalSize};
 

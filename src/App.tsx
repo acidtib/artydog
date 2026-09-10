@@ -36,7 +36,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-neutral-900 text-neutral-100">
       <div className="mx-auto max-w-xl px-6 py-10">
-        <h1 className="text-2xl font-bold">WARDOGS Mortar Calculator</h1>
+        <h1 className="text-2xl font-bold">Potato</h1>
         <p className="mt-4 text-sm text-neutral-300">
           Overlay status: {visible === null ? "…" : visible ? "Visible" : "Hidden"}
         </p>
@@ -45,7 +45,7 @@ export default function App() {
           <p className="mt-1 text-sm text-neutral-400">
             Hotkey &quot;{hotkey.shortcut}&quot;:{" "}
             {hotkey.registered ? "registered" : "NOT registered"}
-            {hotkey.error !== null && <span className="text-red-400"> — {hotkey.error}</span>}
+            {hotkey.error !== null && <span className="text-red-400"> - {hotkey.error}</span>}
           </p>
         )}
         {error !== null && <p className="mt-3 text-sm text-red-400">{error}</p>}

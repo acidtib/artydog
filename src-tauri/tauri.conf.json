@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "WARDOGS Mortar Calculator",
+  "productName": "Potato",
   "version": "0.1.0",
-  "identifier": "com.wardogs.mortar-calculator",
+  "identifier": "com.acidtib.potato",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:1420",
@@ -13,14 +13,14 @@
     "windows": [
       {
         "label": "main",
-        "title": "WARDOGS Mortar Calculator",
+        "title": "Potato",
         "width": 900,
         "height": 700,
         "resizable": true
       },
       {
         "label": "overlay",
-        "title": "WARDOGS Mortar — Overlay",
+        "title": "Potato - Overlay",
         "url": "overlay.html",
         "width": 400,
         "height": 300,

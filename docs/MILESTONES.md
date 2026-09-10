@@ -1,8 +1,8 @@
-# WARDOGS Mortar Calculator — Implementation Milestones
+# Potato - Implementation Milestones
 
 The project should be implemented in this order.
 
-## Milestone 0 — Project bootstrap
+## Milestone 0 - Project bootstrap
 
 Create:
 
@@ -29,7 +29,7 @@ starts the application successfully.
 
 ---
 
-## Milestone 1 — Normal desktop calculator
+## Milestone 1 - Normal desktop calculator
 
 Build the normal application window.
 
@@ -50,7 +50,7 @@ The calculator works completely as a normal desktop application.
 
 ---
 
-## Milestone 2 — Overlay proof of concept
+## Milestone 2 - Overlay proof of concept
 
 This is the most important milestone.
 
@@ -84,7 +84,7 @@ The user can run WARDOGS and place the overlay above it.
 
 ---
 
-## Milestone 3 — Global M hotkey
+## Milestone 3 - Global M hotkey
 
 Add the Tauri global-shortcut plugin.
 
@@ -111,7 +111,7 @@ M reliably toggles the overlay while WARDOGS has focus.
 
 ---
 
-## Milestone 4 — Interactive overlay
+## Milestone 4 - Interactive overlay
 
 Make the overlay interactive.
 
@@ -141,7 +141,7 @@ The user can type coordinates into the overlay without losing normal game contro
 
 ---
 
-## Milestone 5 — Overlay positioning
+## Milestone 5 - Overlay positioning
 
 Implement:
 
@@ -160,7 +160,7 @@ The user can position the calculator once and have it return to that location la
 
 ---
 
-## Milestone 6 — Real calculator
+## Milestone 6 - Real calculator
 
 Replace the test UI with the real calculator.
 
@@ -188,7 +188,7 @@ Known test coordinates produce known expected results.
 
 ---
 
-## Milestone 7 — Normal/overlay shared state
+## Milestone 7 - Normal/overlay shared state
 
 Ensure both windows use the same calculator state.
 
@@ -211,7 +211,7 @@ Changes made in either presentation should update the shared state.
 
 ---
 
-## Milestone 8 — Settings
+## Milestone 8 - Settings
 
 Add:
 
@@ -233,7 +233,7 @@ Only implement foreground detection after the basic overlay is stable.
 
 ---
 
-## Milestone 9 — Windows platform implementation
+## Milestone 9 - Windows platform implementation
 
 Validate on Windows.
 
@@ -254,7 +254,7 @@ Use platform-specific Rust only where the generic Tauri API is insufficient.
 
 ---
 
-## Milestone 10 — KDE Wayland implementation
+## Milestone 10 - KDE Wayland implementation
 
 Validate on:
 
@@ -289,7 +289,7 @@ Do not contaminate the rest of the codebase with Linux-specific conditionals.
 
 ---
 
-## Milestone 11 — Game detection
+## Milestone 11 - Game detection
 
 Optional.
 
@@ -317,7 +317,7 @@ Make this configurable.
 
 ---
 
-## Milestone 12 — Polish
+## Milestone 12 - Polish
 
 Add:
 
@@ -336,7 +336,7 @@ Keep the overlay extremely lightweight.
 
 ---
 
-## Milestone 13 — Packaging
+## Milestone 13 - Packaging
 
 Build:
 
@@ -361,7 +361,7 @@ Tauri supports Windows and Linux application builds. For Windows packaging, buil
 
 ---
 
-## Milestone 14 — CI
+## Milestone 14 - CI
 
 Recommended GitHub Actions matrix:
 

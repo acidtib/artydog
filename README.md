@@ -1,4 +1,4 @@
-# WARDOGS Mortar Calculator
+# Potato
 
 Technical implementation plan for a cross-platform desktop mortar calculator that works as:
 
@@ -7,14 +7,14 @@ Technical implementation plan for a cross-platform desktop mortar calculator tha
 
 ## Recommended stack
 
-- **Tauri 2** — desktop shell and native window management
-- **Rust** — native/backend layer and platform-specific overlay implementation
-- **React + TypeScript** — application UI and calculator logic
-- **Vite** — frontend build tooling
-- **Tailwind CSS** — UI styling
-- **Tauri Global Shortcut plugin** — global hotkey support
-- **Serde** — Rust state/config serialization
-- **Platform abstraction** — Windows and Linux implementations behind one Rust trait
+- **Tauri 2** - desktop shell and native window management
+- **Rust** - native/backend layer and platform-specific overlay implementation
+- **React + TypeScript** - application UI and calculator logic
+- **Vite** - frontend build tooling
+- **Tailwind CSS** - UI styling
+- **Tauri Global Shortcut plugin** - global hotkey support
+- **Serde** - Rust state/config serialization
+- **Platform abstraction** - Windows and Linux implementations behind one Rust trait
 
 Tauri provides native window APIs including always-on-top, transparency, positioning, monitor detection, and visibility controls. The official global-shortcut plugin supports Windows and Linux. See the official documentation links at the end of this document.
 
@@ -26,7 +26,7 @@ The application opens like any other desktop application:
 
 ```text
 ┌─────────────────────────────────┐
-│ WARDOGS Mortar Calculator       │
+│ Potato                        │
 ├─────────────────────────────────┤
 │ Mortar                          │
 │ X [________]  Y [________]      │

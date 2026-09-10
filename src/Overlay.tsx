@@ -19,7 +19,7 @@ export default function Overlay() {
     <div className="h-screen w-screen bg-neutral-900 text-neutral-100">
       <div className="flex h-full flex-col gap-3 p-4">
         <div>
-          <h1 className="text-lg font-bold tracking-wide">WARDOGS MORTAR</h1>
+          <h1 className="text-lg font-bold tracking-wide">POTATO</h1>
           <p className="text-xs text-neutral-400">Overlay</p>
         </div>
         <input

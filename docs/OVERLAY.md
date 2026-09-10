@@ -1,4 +1,4 @@
-# WARDOGS Mortar Calculator — Overlay Technical Design
+# Potato - Overlay Technical Design
 
 ## Goal
 

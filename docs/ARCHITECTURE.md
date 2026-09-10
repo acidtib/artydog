@@ -1,9 +1,9 @@
-# WARDOGS Mortar Calculator — Architecture
+# Potato - Architecture
 
 ## 1. High-level architecture
 
 ```text
-                    WARDOGS MORTAR CALCULATOR
+                    POTATO
                               │
                 ┌─────────────┴─────────────┐
                 │                           │
