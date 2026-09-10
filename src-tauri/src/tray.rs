@@ -22,23 +22,31 @@ fn main_window(app: &AppHandle) -> Result<tauri::WebviewWindow, String> {
         .ok_or_else(|| format!("main window \"{MAIN_LABEL}\" not found"))
 }
 
+/// Surface the main window from any state: hidden in the tray or minimized.
+pub fn show_main(app: &AppHandle) {
+    match main_window(app) {
+        Ok(window) => {
+            // Restore first so a tray-minimized window does not come back
+            // as a minimized ghost.
+            let _ = window.unminimize();
+            let result = window.show().and_then(|_| window.set_focus());
+            if let Err(e) = result {
+                eprintln!("[tray] failed to show main window: {e}");
+            }
+        }
+        Err(e) => eprintln!("[tray] {e}"),
+    }
+}
+
 pub fn toggle_main(app: &AppHandle) {
     match main_window(app) {
         Ok(window) => {
-            let visible = window.is_visible().unwrap_or(false);
-            let result = if visible {
-                window.hide().map_err(|e| e.to_string())
+            if window.is_visible().unwrap_or(false) {
+                if let Err(e) = window.hide() {
+                    eprintln!("[tray] failed to hide main window: {e}");
+                }
             } else {
-                // Window may have been minimized to the tray: restore it
-                // before showing so it does not stay a minimized ghost.
-                let _ = window.unminimize();
-                window
-                    .show()
-                    .and_then(|_| window.set_focus())
-                    .map_err(|e| e.to_string())
-            };
-            if let Err(e) = result {
-                eprintln!("[tray] failed to toggle main window: {e}");
+                show_main(app);
             }
         }
         Err(e) => eprintln!("[tray] {e}"),
