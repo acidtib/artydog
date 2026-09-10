@@ -4,8 +4,10 @@ Potato is a Tauri 2 desktop app: a React/TypeScript frontend over a Rust
 backend, running as a normal window or as an interactive overlay over the
 game WARDOGS. Two frontend entry points: the main window
 (`index.html` -> `src/main.tsx` -> `App.tsx`) and the overlay window
-(`overlay.html` -> `src/overlay-main.tsx` -> `Overlay.tsx`). See
-`docs/ARCHITECTURE.md` for detail.
+(`overlay.html` -> `src/overlay-main.tsx` -> `Overlay.tsx`). Firing solutions
+come from `src/calculator/`, which is pure TypeScript and free of React and
+Tauri. See `docs/ARCHITECTURE.md` for detail and `docs/BALLISTICS.md` for the
+firing data.
 
 ## Commands
 
@@ -40,6 +42,8 @@ reader scanning `git log` needs before anything else.
 - **Scope**: the subsystem touched. Lowercase, no punctuation. Use one of:
   - `main`: main window UI in `src/App.tsx`, `src/main.tsx`
   - `overlay`: overlay window UI in `src/Overlay.tsx`, `src/overlay-main.tsx`, or Rust code in `src-tauri/src/overlay/`
+  - `calculator`: ballistics math and firing data in `src/calculator/`
+  - `components`: shared UI components in `src/components/`
   - `hotkey`: global shortcut code in `src-tauri/src/hotkey/`
   - `tray`: tray icon and window close to tray in `src-tauri/src/tray.rs`
   - `commands`: Tauri commands in `src-tauri/src/commands.rs`
