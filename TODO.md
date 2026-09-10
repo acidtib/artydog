@@ -21,11 +21,11 @@ Follow-ups from the code review. None of these block the current milestone.
 
 ## Rust cleanup
 
-- [ ] `src-tauri/src/hotkey/manager.rs`: `toggle_shortcut()` returns
+- [x] `src-tauri/src/hotkey/manager.rs`: `toggle_shortcut()` returns
   `Result` but cannot fail; simplify to return `Shortcut` directly.
-- [ ] `src-tauri/src/platform/windows.rs`: document why `after_show`
+- [x] `src-tauri/src/platform/windows.rs`: document why `after_show`
   re-asserts `alwaysOnTop` (as `linux.rs` does), or drop the call there.
-- [ ] `src-tauri/src/platform/fallback.rs`: `after_show` calls
+- [x] `src-tauri/src/platform/fallback.rs`: `after_show` calls
   `set_focus`, then `OverlayManager::show()` focuses again; remove one.
 
 ## Testing
