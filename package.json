@@ -10,10 +10,15 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "test": "vitest run",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "release:patch": "node scripts/bump.mjs patch",
+    "release:minor": "node scripts/bump.mjs minor",
+    "release:major": "node scripts/bump.mjs major"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-process": "^2.3.1",
+    "@tauri-apps/plugin-updater": "^2.11.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
