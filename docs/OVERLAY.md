@@ -214,6 +214,18 @@ Potential responsibilities:
 
 Do not add X11 dependencies unless an actual requirement is demonstrated.
 
+### Known limitation: the global hotkey
+
+`global-hotkey` grabs through X11, so bare `M` does not fire under native
+Wayland. Confirmed on KDE Plasma. The tray menu and the main window's Toggle
+Overlay button work regardless, and the hotkey does fire under XWayland
+(`GDK_BACKEND=x11`).
+
+This is not currently worth a workaround: WARDOGS has no full Linux support,
+so the overlay has no game to sit over here. Revisit if that changes. A fix
+would need a compositor-specific shortcut registration in `platform/linux.rs`,
+for example KWin's global shortcut DBus interface.
+
 ## X11
 
 X11 support should be treated as a compatibility target rather than the primary Linux implementation.
