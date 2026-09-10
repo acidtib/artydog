@@ -35,18 +35,19 @@ the first stable release exists the 404 shows nothing.
 
 ## Signing
 
-Updates must be signed or the app refuses them. The keypair lives at
-`~/.tauri/artydog.key` and the public half is in `tauri.conf.json`. CI signs
-with the repo secret `TAURI_SIGNING_PRIVATE_KEY`.
+Updates must be signed or the app refuses them. The private key is kept
+outside this repo and the public half is in `tauri.conf.json`. CI signs with
+the repo secrets `TAURI_SIGNING_PRIVATE_KEY` and
+`TAURI_SIGNING_PRIVATE_KEY_PASSWORD`.
 
-The key has no password. `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` is referenced
-by the workflow but deliberately not set: an undefined secret resolves to the
-empty string, which is what a passwordless key wants.
+The public key in the config and the private key in the secret must be two
+halves of the same pair. They are only checked against each other when a real
+update runs, so a mismatch is silent until it strands an install.
 
-**Losing the private key strands every install.** They keep running but can
+**Losing the private key, or its password, strands every install.** They keep running but can
 never auto-update again, because a new key produces signatures the installed
 public key rejects. Recovery means every user downloading a fresh installer
-by hand. Keep `~/.tauri/artydog.key` backed up.
+by hand. Keep the private key and its password backed up.
 
 ## Rotating the signing key
 
@@ -58,12 +59,15 @@ with a new key is rejected by everything already installed under the old one.
 free, because nothing out there checks signatures yet:
 
 ```bash
-pnpm tauri signer generate -w ~/.tauri/artydog.key -f
-gh secret set TAURI_SIGNING_PRIVATE_KEY < ~/.tauri/artydog.key
+pnpm tauri signer generate -w <key-path> -f
+gh secret set TAURI_SIGNING_PRIVATE_KEY < <key-path>
+gh secret set TAURI_SIGNING_PRIVATE_KEY_PASSWORD   # if the key has one
 ```
 
-Then copy `~/.tauri/artydog.key.pub` into `plugins.updater.pubkey` in
-`tauri.conf.json` and commit. The public key is not a secret.
+Then copy the matching `.pub` file into `plugins.updater.pubkey` in
+`tauri.conf.json` and commit. The public key is not a secret. Forgetting this
+last step is the easy mistake: CI signs happily with the new key while
+installs still trust the old one.
 
 **After installs exist in the wild** it takes a transition release, and the
 old private key has to still be available:
@@ -87,8 +91,8 @@ jobs, so adding a password needs no workflow change: generate the key with
 one and store it as a secret.
 
 ```bash
-pnpm tauri signer generate -w ~/.tauri/artydog.key -f   # prompts for it
-gh secret set TAURI_SIGNING_PRIVATE_KEY < ~/.tauri/artydog.key
+pnpm tauri signer generate -w <key-path> -f   # prompts for it
+gh secret set TAURI_SIGNING_PRIVATE_KEY < <key-path>
 gh secret set TAURI_SIGNING_PRIVATE_KEY_PASSWORD        # prompts, no echo
 ```
 
@@ -98,7 +102,7 @@ leaves the password in shell history and in `ps` output while it runs.
 Local release builds then need both:
 
 ```bash
-export TAURI_SIGNING_PRIVATE_KEY_PATH=~/.tauri/artydog.key
+export TAURI_SIGNING_PRIVATE_KEY_PATH=<key-path>
 export TAURI_SIGNING_PRIVATE_KEY_PASSWORD=...
 pnpm tauri build
 ```
