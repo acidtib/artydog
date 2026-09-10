@@ -1,5 +1,8 @@
 import type { Elevation, FiringTableEntry } from "./types";
 
+// Distances arrive from hypot(), so a row hit can land a float step off.
+const RANGE_EPSILON = 1e-6;
+
 /// Interpolates linearly between bracketing rows; null outside the table.
 export function elevationMil(
   table: readonly FiringTableEntry[],
@@ -10,7 +13,7 @@ export function elevationMil(
   }
 
   const mils = table
-    .filter(([range]) => range === rangeMeters)
+    .filter(([range]) => Math.abs(range - rangeMeters) <= RANGE_EPSILON)
     .map(([, mil]) => mil);
 
   if (mils.length > 0) {

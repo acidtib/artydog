@@ -95,6 +95,17 @@ it("returns a mil span where the table gives two elevations at one range", () =>
   expect(formatMil(elevation!)).toBe("610-620");
 });
 
+it("tolerates float drift on an exact row hit", () => {
+  const high = weapon("sph2").arcs.find((arc) => arc.id === "high");
+
+  // hypot() can land a float step off a row, which must not fall through to
+  // interpolation and lose the span, or past the last row and return null.
+  expect(elevationMil(high!.table, 2629 + Number.EPSILON * 2629)).toEqual({
+    minMil: 610,
+    maxMil: 620,
+  });
+});
+
 it("interpolates linearly between table rows", () => {
   const table = [
     [100, 900],
