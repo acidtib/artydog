@@ -9,9 +9,6 @@ pub fn name() -> &'static str {
     "windows"
 }
 
-pub fn after_show(window: &tauri::WebviewWindow) -> OverlayResult<()> {
-    window
-        .set_always_on_top(true)
-        .map_err(|e| format!("failed to pin overlay on top: {e}"))?;
+pub fn after_show(_window: &tauri::WebviewWindow) -> OverlayResult<()> {
     Ok(())
 }
