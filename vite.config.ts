@@ -12,6 +12,9 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   clearScreen: false,
   server: {
+    // Bind IPv4 explicitly: "localhost" resolves to ::1 first here, and the
+    // webview connects over 127.0.0.1, so a default bind is refused.
+    host: "127.0.0.1",
     port: 1420,
     strictPort: true,
   },
