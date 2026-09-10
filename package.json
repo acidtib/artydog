@@ -1,0 +1,35 @@
+{
+  "name": "wardogs-mortar-calculator",
+  "private": true,
+  "version": "0.1.0",
+  "description": "WARDOGS Mortar Calculator \u2014 desktop app with game overlay (Phase 1: overlay architecture proof)",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "tauri": "tauri"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.14.0",
+    "@tailwindcss/vite": "^4.0.0",
+    "@tauri-apps/cli": "^2",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "eslint": "^9.14.0",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "eslint-plugin-react-refresh": "^0.4.20",
+    "tailwindcss": "^4.0.0",
+    "typescript": "~5.6.2",
+    "typescript-eslint": "^8.14.0",
+    "vite": "^6.0.3"
+  },
+  "packageManager": "pnpm@11.22.0"
+}

@@ -1,0 +1,47 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "WARDOGS Mortar Calculator",
+  "version": "0.1.0",
+  "identifier": "com.wardogs.mortar-calculator",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:1420",
+    "beforeDevCommand": "pnpm dev",
+    "beforeBuildCommand": "pnpm build"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "WARDOGS Mortar Calculator",
+        "width": 900,
+        "height": 700,
+        "resizable": true
+      },
+      {
+        "label": "overlay",
+        "title": "WARDOGS Mortar — Overlay",
+        "url": "overlay.html",
+        "width": 400,
+        "height": 300,
+        "center": true,
+        "visible": false,
+        "decorations": false,
+        "transparent": false,
+        "alwaysOnTop": true,
+        "resizable": true,
+        "skipTaskbar": true,
+        "focus": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/icon.ico"],
+    "category": "Utility"
+  }
+}

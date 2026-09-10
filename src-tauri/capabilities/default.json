@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Default capability set (Phase 1: overlay proof of concept).",
+  "windows": ["main", "overlay"],
+  "permissions": ["core:default", "opener:default"]
+}

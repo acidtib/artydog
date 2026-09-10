@@ -1,0 +1,50 @@
+import { useCallback, useState } from "react";
+import { hideOverlay } from "./lib/overlay";
+
+export default function Overlay() {
+  const [text, setText] = useState("");
+  const [count, setCount] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+
+  const onHide = useCallback(async () => {
+    try {
+      await hideOverlay();
+      setError(null);
+    } catch (e) {
+      setError(String(e));
+    }
+  }, []);
+
+  return (
+    <div className="h-screen w-screen bg-neutral-900 text-neutral-100">
+      <div className="flex h-full flex-col gap-3 p-4">
+        <div>
+          <h1 className="text-lg font-bold tracking-wide">WARDOGS MORTAR</h1>
+          <p className="text-xs text-neutral-400">Overlay</p>
+        </div>
+        <input
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Test Input"
+          className="w-full rounded border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm outline-none focus:border-emerald-500"
+        />
+        <button
+          type="button"
+          onClick={() => setCount((c) => c + 1)}
+          className="rounded bg-emerald-600 px-3 py-2 text-sm font-semibold hover:bg-emerald-500"
+        >
+          Test Button ({count})
+        </button>
+        <button
+          type="button"
+          onClick={() => void onHide()}
+          className="rounded bg-neutral-700 px-3 py-2 text-sm hover:bg-neutral-600"
+        >
+          Hide Overlay
+        </button>
+        <p className="mt-auto text-xs text-neutral-500">M toggles overlay</p>
+        {error !== null && <p className="text-xs text-red-400">{error}</p>}
+      </div>
+    </div>
+  );
+}

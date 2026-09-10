@@ -1,0 +1,17 @@
+# frontend
+node_modules
+dist
+dist-ssr
+*.local
+
+# vite
+.vite
+
+# tauri / rust
+src-tauri/target
+src-tauri/gen
+
+# editors
+.vscode/*
+!.vscode/extensions.json
+.idea
