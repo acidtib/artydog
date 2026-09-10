@@ -5,13 +5,39 @@ pub const OVERLAY_LABEL: &str = "overlay";
 pub const MAIN_LABEL: &str = "main";
 pub const OVERLAY_DEFAULT_WIDTH: u32 = 400;
 pub const OVERLAY_DEFAULT_HEIGHT: u32 = 300;
+pub const OVERLAY_MIN_WIDTH: u32 = 280;
+pub const OVERLAY_MIN_HEIGHT: u32 = 200;
+
+/// How much of the overlay has to stay on a monitor to count as reachable.
+/// The overlay is undecorated, so an off-screen one cannot be dragged back.
+const MIN_VISIBLE: i64 = 48;
 
 #[derive(Debug, Clone, Copy, Serialize)]
 pub struct OverlayStatus {
     pub visible: bool,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+/// A monitor's work area in the same physical coordinate space as
+/// [`OverlayGeometry`]. Origins can be negative on multi-monitor setups.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct MonitorRect {
+    pub x: i32,
+    pub y: i32,
+    pub width: u32,
+    pub height: u32,
+}
+
+impl MonitorRect {
+    fn right(self) -> i64 {
+        i64::from(self.x) + i64::from(self.width)
+    }
+
+    fn bottom(self) -> i64 {
+        i64::from(self.y) + i64::from(self.height)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct OverlayGeometry {
     pub x: i32,
     pub y: i32,
@@ -37,6 +63,56 @@ impl OverlayGeometry {
     /// A copy with `width`/`height` replaced, keeping the current position.
     pub fn merged_size(self, width: u32, height: u32) -> Self {
         Self { width, height, ..self }
+    }
+
+    fn right(self) -> i64 {
+        i64::from(self.x) + i64::from(self.width)
+    }
+
+    fn bottom(self) -> i64 {
+        i64::from(self.y) + i64::from(self.height)
+    }
+
+    fn reachable_on(self, monitor: MonitorRect) -> bool {
+        let overlap_x = self.right().min(monitor.right()) - i64::from(self.x.max(monitor.x));
+        let overlap_y = self.bottom().min(monitor.bottom()) - i64::from(self.y.max(monitor.y));
+        overlap_x >= MIN_VISIBLE && overlap_y >= MIN_VISIBLE
+    }
+
+    pub fn centered_in(self, monitor: MonitorRect) -> Self {
+        Self {
+            x: monitor.x + (monitor.width as i32 - self.width as i32) / 2,
+            y: monitor.y + (monitor.height as i32 - self.height as i32) / 2,
+            ..self
+        }
+    }
+
+    /// Size held between the minimum and the largest monitor, so a size saved
+    /// on a big screen still fits a smaller one.
+    fn fitted(self, monitors: &[MonitorRect]) -> Self {
+        let widest = monitors.iter().map(|m| m.width).max().unwrap_or(u32::MAX);
+        let tallest = monitors.iter().map(|m| m.height).max().unwrap_or(u32::MAX);
+        Self {
+            width: self
+                .width
+                .clamp(OVERLAY_MIN_WIDTH, widest.max(OVERLAY_MIN_WIDTH)),
+            height: self
+                .height
+                .clamp(OVERLAY_MIN_HEIGHT, tallest.max(OVERLAY_MIN_HEIGHT)),
+            ..self
+        }
+    }
+
+    /// Geometry the user can still reach. Recovery centers on the first
+    /// monitor, so callers pass the primary one first.
+    pub fn clamped_to(self, monitors: &[MonitorRect]) -> Self {
+        let fitted = self.fitted(monitors);
+        match monitors.first() {
+            Some(primary) if !monitors.iter().any(|m| fitted.reachable_on(*m)) => {
+                fitted.centered_in(*primary)
+            }
+            _ => fitted,
+        }
     }
 }
 
@@ -70,6 +146,30 @@ impl Default for AppState {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    const PRIMARY: MonitorRect = MonitorRect {
+        x: 0,
+        y: 0,
+        width: 1920,
+        height: 1080,
+    };
+
+    /// A second monitor to the left, which is where negative origins come from.
+    const LEFT: MonitorRect = MonitorRect {
+        x: -1280,
+        y: 0,
+        width: 1280,
+        height: 1024,
+    };
+
+    fn geometry(x: i32, y: i32) -> OverlayGeometry {
+        OverlayGeometry {
+            x,
+            y,
+            width: 400,
+            height: 300,
+        }
+    }
 
     #[test]
     fn defaults_match_declared_constants() {
@@ -108,5 +208,79 @@ mod tests {
         assert_eq!(merged.y, 20);
         assert_eq!(merged.width, 800);
         assert_eq!(merged.height, 600);
+    }
+
+    #[test]
+    fn clamp_keeps_geometry_that_sits_on_a_monitor() {
+        let saved = geometry(1400, 800);
+        assert_eq!(saved.clamped_to(&[PRIMARY]), saved);
+    }
+
+    #[test]
+    fn clamp_keeps_geometry_on_a_monitor_with_a_negative_origin() {
+        let saved = geometry(-900, 100);
+        assert_eq!(saved.clamped_to(&[PRIMARY, LEFT]), saved);
+    }
+
+    #[test]
+    fn clamp_recenters_when_the_saved_monitor_is_gone() {
+        let saved = geometry(-900, 100);
+        let recovered = saved.clamped_to(&[PRIMARY]);
+        assert_eq!(recovered, geometry(760, 390));
+    }
+
+    #[test]
+    fn clamp_recenters_geometry_hanging_off_the_edge() {
+        // Only 20px wide sliver left on screen, below MIN_VISIBLE.
+        let saved = geometry(1900, 400);
+        assert_eq!(saved.clamped_to(&[PRIMARY]), geometry(760, 390));
+    }
+
+    #[test]
+    fn clamp_enforces_the_minimum_size() {
+        let saved = OverlayGeometry {
+            x: 100,
+            y: 100,
+            width: 40,
+            height: 10,
+        };
+        let clamped = saved.clamped_to(&[PRIMARY]);
+        assert_eq!(clamped.width, OVERLAY_MIN_WIDTH);
+        assert_eq!(clamped.height, OVERLAY_MIN_HEIGHT);
+    }
+
+    #[test]
+    fn clamp_caps_size_to_the_largest_monitor() {
+        let saved = OverlayGeometry {
+            x: 0,
+            y: 0,
+            width: 4000,
+            height: 3000,
+        };
+        let clamped = saved.clamped_to(&[LEFT]);
+        assert_eq!(clamped.width, LEFT.width);
+        assert_eq!(clamped.height, LEFT.height);
+    }
+
+    #[test]
+    fn clamp_without_monitors_only_enforces_the_minimum_size() {
+        let saved = OverlayGeometry {
+            x: 5000,
+            y: 5000,
+            width: 40,
+            height: 10,
+        };
+        let clamped = saved.clamped_to(&[]);
+        assert_eq!(clamped.x, 5000);
+        assert_eq!(clamped.y, 5000);
+        assert_eq!(clamped.width, OVERLAY_MIN_WIDTH);
+        assert_eq!(clamped.height, OVERLAY_MIN_HEIGHT);
+    }
+
+    #[test]
+    fn centered_in_uses_the_monitor_origin() {
+        let centered = geometry(0, 0).centered_in(LEFT);
+        assert_eq!(centered.x, -1280 + (1280 - 400) / 2);
+        assert_eq!(centered.y, (1024 - 300) / 2);
     }
 }
