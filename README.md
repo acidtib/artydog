@@ -85,6 +85,12 @@ The first milestone is proving:
 
 Only after this is reliable should the calculator logic be built out.
 
+## Releasing
+
+Pushes to `main` publish a rolling bleeding-edge prerelease. Cutting a stable
+release is `pnpm release:patch` then pushing the tag it makes. The app updates
+itself from the latest stable release. See `docs/RELEASING.md`.
+
 ## Documentation sources
 
 - Tauri window API: https://tauri.app/reference/javascript/api/namespacewindow/

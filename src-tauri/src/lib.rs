@@ -64,6 +64,8 @@ pub fn run() {
                 })
                 .build(),
         )
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .manage(AppState::new())
         .on_window_event(|window, event| match window.label() {
             state::MAIN_LABEL => main_window_event(window, event),
