@@ -51,7 +51,8 @@ reader scanning `git log` needs before anything else.
   - `platform`: OS abstraction in `src-tauri/src/platform/`
   - `lib`: shared frontend code in `src/lib/`
   - `style`: styling in `src/styles.css`, Tailwind setup
-  - `config`: `tauri.conf.json`, `vite.config.ts`, `Cargo.toml`, `package.json`
+  - `config`: `tauri.conf.json`, `vite.config.ts`, `Cargo.toml`, `package.json`,
+    capabilities, and the settings module in `src-tauri/src/config/`
   - `ci`: `.github/workflows/`
   - `tests`: `*.test.*`, `src/test/`, Rust `#[test]`
   - `docs`: `README.md`, `TODO.md`, `docs/`, this file

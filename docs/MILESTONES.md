@@ -404,8 +404,8 @@ MVP is complete when all of the following are true:
 - [ ] Overlay appears above WARDOGS.
 - [ ] Overlay is interactive.
 - [ ] Pointer outside overlay can interact with WARDOGS.
-- [ ] Overlay position persists.
-- [ ] Overlay size persists.
+- [x] Overlay position persists.
+- [x] Overlay size persists.
 - [ ] Calculator state persists while toggling overlay.
 - [ ] Works on Windows.
 - [ ] Works on KDE Wayland Linux.

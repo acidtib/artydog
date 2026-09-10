@@ -320,6 +320,24 @@ struct OverlayConfig {
 
 The exact monitor identifier should be treated as implementation detail.
 
+### Implemented behavior
+
+No monitor identifier is stored. The saved rectangle is checked against the
+monitors that exist at show time instead, which needs no stable monitor name
+and handles a rearranged desktop as well as a disconnected one:
+
+- Size is held between `OVERLAY_MIN_WIDTH`/`OVERLAY_MIN_HEIGHT` and the
+  largest monitor, so a size saved on a big screen still fits a small one.
+- Geometry that leaves less than `MIN_VISIBLE` px of the overlay on any
+  monitor is recentered on the primary one. The overlay is undecorated, so an
+  off-screen one cannot be dragged back.
+- The user can also recenter on demand with `reset_overlay_geometry`.
+
+Geometry is held in memory while the overlay moves and resizes, and written
+to `config.json` in the app config directory on hide, on an explicit
+move/resize command, and on quit from the tray. A drag emits far too many
+move events to write each one.
+
 ## Testing checklist
 
 ### Windows
