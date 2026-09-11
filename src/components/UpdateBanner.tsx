@@ -7,6 +7,7 @@ export default function UpdateBanner() {
   const [percent, setPercent] = useState<number | null>(null);
   const [dismissed, setDismissed] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [checkFailed, setCheckFailed] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -17,9 +18,13 @@ export default function UpdateBanner() {
         if (!cancelled && found !== null) {
           setUpdate(found);
         }
-      } catch {
-        // Until the first stable release exists the endpoint 404s, and an
-        // offline launch fails the same way. Neither is worth a banner.
+      } catch (e) {
+        // Being offline fails the same way a misconfigured endpoint does, so
+        // this stays quiet, but never silent: an invisible failure is
+        // indistinguishable from being up to date.
+        if (!cancelled) {
+          setCheckFailed(String(e));
+        }
       }
     })();
 
@@ -59,7 +64,11 @@ export default function UpdateBanner() {
   }, [update]);
 
   if (update === null || dismissed) {
-    return null;
+    return checkFailed === null ? null : (
+      <p className="mt-6 text-xs text-neutral-500">
+        Update check failed: {checkFailed}
+      </p>
+    );
   }
 
   const installing = percent !== null;

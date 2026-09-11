@@ -5,6 +5,7 @@ edition = "2021"
 rust-version = "1.77.2"
 description = "ArtyDog - Instant firing solutions in WARDOGS"
 authors = ["acidtib"]
+license = "MIT"
 
 [lib]
 name = "artydog_lib"

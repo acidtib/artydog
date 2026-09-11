@@ -25,10 +25,29 @@ Pushing the tag builds a normal (non-prerelease) GitHub release. Because it
 is not a prerelease, it becomes what `releases/latest` resolves to, which is
 where the updater looks.
 
+## The repository has to be public
+
+The updater fetches `latest.json` and the installers anonymously. GitHub
+returns 404 for a private repository's release assets, and the download URLs
+inside `latest.json` point at `api.github.com`, which needs a token. So a
+private repository breaks updating in two places at once, and the app cannot
+tell that apart from being offline.
+
+Shipping a token inside the app is not an answer: it would hand every user
+access to the repository. If the source ever needs to be private again, the
+release artifacts have to move somewhere anonymous, such as a separate public
+releases repository or object storage, and `plugins.updater.endpoints` in
+`tauri.conf.json` has to follow.
+
+That endpoint contains the repository name, so renaming the repository means
+updating it in the same commit. Installs built before a rename keep the old
+URL and rely on GitHub redirecting it, which stops the day something else
+claims the old name. Do not reuse a retired repository name.
+
 ## How updating works
 
 The app checks
-`https://github.com/acidtib/potato/releases/latest/download/latest.json` on
+`https://github.com/acidtib/artydog/releases/latest/download/latest.json` on
 main-window start. If a newer version is there, a banner offers "Update &
 restart"; the overlay stays clean during play. Failures are silent, so before
 the first stable release exists the 404 shows nothing.
