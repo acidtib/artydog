@@ -8,6 +8,10 @@ pub const OVERLAY_DEFAULT_HEIGHT: u32 = 300;
 pub const OVERLAY_MIN_WIDTH: u32 = 280;
 pub const OVERLAY_MIN_HEIGHT: u32 = 200;
 
+/// WARDOGS binds bare `M` to its map, and a registered shortcut is exclusive:
+/// the game would never see the key again. The modifier keeps them apart.
+pub const DEFAULT_HOTKEY: &str = "Alt+M";
+
 /// How much of the overlay has to stay on a monitor to count as reachable.
 /// The overlay is undecorated, so an off-screen one cannot be dragged back.
 const MIN_VISIBLE: i64 = 48;
@@ -125,6 +129,8 @@ pub struct HotkeyStatus {
 
 pub struct AppState {
     pub geometry: Mutex<Option<OverlayGeometry>>,
+    /// The shortcut the user configured, registered or not.
+    pub hotkey: Mutex<String>,
     pub hotkey_error: Mutex<Option<String>>,
 }
 
@@ -132,6 +138,7 @@ impl AppState {
     pub fn new() -> Self {
         Self {
             geometry: Mutex::new(None),
+            hotkey: Mutex::new(DEFAULT_HOTKEY.to_string()),
             hotkey_error: Mutex::new(None),
         }
     }

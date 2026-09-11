@@ -82,6 +82,7 @@ pub fn run() {
             commands::set_overlay_size,
             commands::reset_overlay_geometry,
             commands::get_hotkey_status,
+            commands::set_hotkey,
         ])
         .setup(|app| {
             eprintln!(
@@ -109,21 +110,13 @@ pub fn run() {
                 eprintln!("[setup] overlay window \"{OVERLAY_LABEL}\" not found");
             }
 
-            // Register the global toggle. A failure must be visible, never
-            // silent: record it in state (surfaced via get_hotkey_status)
-            // and log it.
             if let Err(e) = tray::build_tray(app) {
                 eprintln!("[setup] {e}");
             }
 
-            if let Err(e) = hotkey::register_toggle_shortcut(&handle) {
-                eprintln!("[setup] {e}");
-                let state = handle.state::<AppState>();
-                let app_state: &AppState = &state;
-                let _ = app_state.hotkey_error.lock().map(|mut guard| {
-                    *guard = Some(e);
-                });
-            }
+            // A failed registration must be visible, never silent: it is
+            // recorded in state and surfaced by get_hotkey_status.
+            hotkey::register_saved_hotkey(&handle);
             Ok(())
         })
         .run(tauri::generate_context!())

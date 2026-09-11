@@ -34,7 +34,8 @@ function mockBackend() {
       case "toggle_overlay":
         return Promise.resolve({ visible: false });
       case "get_hotkey_status":
-        return Promise.resolve({ shortcut: "M", registered: true, error: null });
+      case "set_hotkey":
+        return Promise.resolve({ shortcut: "Alt+KeyM", registered: true, error: null });
       case "reset_overlay_geometry":
         return Promise.resolve({ x: 760, y: 390, width: 400, height: 300 });
       default:
@@ -68,7 +69,7 @@ afterEach(() => {
 
 it("fetches the initial status once and registers the event listener", async () => {
   await renderSettled();
-  expect(screen.getByText(/Hotkey "M": registered/)).toBeInTheDocument();
+  expect(screen.getByText(/Alt \+ M/)).toBeInTheDocument();
 
   const commands = invokeMock.mock.calls.map((call) => call[0]);
   expect(commands).toEqual(["get_overlay_state", "get_hotkey_status"]);
@@ -174,4 +175,29 @@ it("reset position invokes reset_overlay_geometry", async () => {
   await waitFor(() => {
     expect(invokeMock).toHaveBeenCalledWith("reset_overlay_geometry");
   });
+});
+
+it("capturing a key combination rebinds the shortcut", async () => {
+  await renderSettled();
+
+  fireEvent.click(screen.getByRole("button", { name: "Change shortcut" }));
+  const capturing = screen.getByRole("button", { name: /Press a key combination/ });
+  fireEvent.keyDown(capturing, { code: "F9" });
+
+  await waitFor(() => {
+    expect(invokeMock).toHaveBeenCalledWith("set_hotkey", { shortcut: "F9" });
+  });
+});
+
+it("escape cancels capturing without rebinding", async () => {
+  await renderSettled();
+
+  fireEvent.click(screen.getByRole("button", { name: "Change shortcut" }));
+  fireEvent.keyDown(screen.getByRole("button", { name: /Press a key combination/ }), {
+    key: "Escape",
+    code: "Escape",
+  });
+
+  expect(screen.getByRole("button", { name: "Change shortcut" })).toBeInTheDocument();
+  expect(invokeMock).not.toHaveBeenCalledWith("set_hotkey", expect.anything());
 });

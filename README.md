@@ -44,11 +44,11 @@ The application opens like any other desktop application:
 
 ### Overlay mode
 
-When WARDOGS is running, the user presses `M`.
+When WARDOGS is running, the user presses `Alt`+`M` (configurable).
 
 The calculator overlay appears above the game and remains interactive.
 
-Press `M` again to hide it.
+Press it again to hide it.
 
 The calculator process does not restart or lose state when the overlay is hidden.
 
@@ -76,7 +76,7 @@ The first milestone is proving:
 
 - WARDOGS can remain running.
 - The application can run normally as a desktop app.
-- `M` can toggle the overlay.
+- The shortcut can toggle the overlay.
 - The overlay stays above the game.
 - The overlay can receive mouse/keyboard input.
 - The user can move the pointer away from the overlay and continue interacting with the game.

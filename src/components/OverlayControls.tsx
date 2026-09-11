@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import HotkeySetting from "./HotkeySetting";
 import {
   getHotkeyStatus,
   getOverlayState,
@@ -10,7 +11,7 @@ import {
 
 export default function OverlayControls() {
   const [visible, setVisible] = useState<boolean | null>(null);
-  const [hotkey, setHotkey] = useState<HotkeyStatus | null>(null);
+  const [hotkey, setHotkeyStatus] = useState<HotkeyStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   // Guards against a stale initial fetch clobbering an event that arrived
   // while the fetch was in flight.
@@ -49,7 +50,7 @@ export default function OverlayControls() {
         if (!eventSeen.current) {
           setVisible(status.visible);
         }
-        setHotkey(hotkeyStatus);
+        setHotkeyStatus(hotkeyStatus);
         setError(null);
       } catch (e) {
         if (!cancelled) {
@@ -88,14 +89,7 @@ export default function OverlayControls() {
       <p className="text-sm text-neutral-300">
         Overlay status: {visible === null ? "…" : visible ? "Visible" : "Hidden"}
       </p>
-      <p className="mt-1 text-sm text-neutral-400">Press M to toggle the overlay.</p>
-      {hotkey !== null && (
-        <p className="mt-1 text-sm text-neutral-400">
-          Hotkey &quot;{hotkey.shortcut}&quot;:{" "}
-          {hotkey.registered ? "registered" : "NOT registered"}
-          {hotkey.error !== null && <span className="text-red-400"> - {hotkey.error}</span>}
-        </p>
-      )}
+      {hotkey !== null && <HotkeySetting status={hotkey} onChange={setHotkeyStatus} />}
       {error !== null && <p className="mt-3 text-sm text-red-400">{error}</p>}
       <div className="mt-4 flex gap-2">
         <button

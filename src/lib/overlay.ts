@@ -65,6 +65,10 @@ export async function getHotkeyStatus(): Promise<HotkeyStatus> {
   return invoke<HotkeyStatus>("get_hotkey_status");
 }
 
+export async function setHotkey(shortcut: string): Promise<HotkeyStatus> {
+  return invoke<HotkeyStatus>("set_hotkey", { shortcut });
+}
+
 /// Subscribes to overlay visibility changes emitted by Rust. Returns an
 /// unlisten function.
 export function onOverlayVisibilityChanged(

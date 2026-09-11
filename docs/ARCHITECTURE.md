@@ -303,7 +303,7 @@ Example:
     "width": 420,
     "height": 520
   },
-  "hotkey": "M",
+  "hotkey": "Alt+M",
   "activationMode": "always"
 }
 ```
