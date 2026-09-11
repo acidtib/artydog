@@ -102,6 +102,10 @@ their own.
 | [docs/RELEASING.md](docs/RELEASING.md) | Cutting a release, signing, key rotation |
 | [AGENTS.md](AGENTS.md) | Conventions for anyone (or anything) writing code here |
 
+## License
+
+MIT. See [LICENSE](LICENSE).
+
 ## Not affiliated with WARDOGS
 
 This is an unofficial fan-made tool, not connected to or endorsed by the
