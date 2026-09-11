@@ -1,5 +1,9 @@
 # ArtyDog - Architecture
 
+The repository is a pnpm workspace with two apps: `apps/desktop` (this app)
+and `apps/website` (the landing site). Paths below are relative to
+`apps/desktop/`.
+
 ## 1. High-level architecture
 
 ```text

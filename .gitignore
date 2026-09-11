@@ -8,8 +8,8 @@ dist-ssr
 .vite
 
 # tauri / rust
-src-tauri/target
-src-tauri/gen
+apps/desktop/src-tauri/target
+apps/desktop/src-tauri/gen
 
 # editors
 .vscode/*

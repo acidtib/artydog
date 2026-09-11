@@ -1,25 +1,28 @@
 # AGENTS.md
 
-ArtyDog is a Tauri 2 desktop app: a React/TypeScript frontend over a Rust
-backend, running as a normal window or as an interactive overlay over the
-game WARDOGS. Two frontend entry points: the main window
-(`index.html` -> `src/main.tsx` -> `App.tsx`) and the overlay window
-(`overlay.html` -> `src/overlay-main.tsx` -> `Overlay.tsx`). Firing solutions
-come from `src/calculator/`, which is pure TypeScript and free of React and
-Tauri. See `docs/ARCHITECTURE.md` for detail and `docs/BALLISTICS.md` for the
-firing data.
+ArtyDog is a pnpm workspace (see `pnpm-workspace.yaml`) with two apps:
+`apps/desktop`, a Tauri 2 app (React/TypeScript frontend over a Rust backend)
+that runs as a normal window or as an interactive overlay over the game
+WARDOGS, and `apps/website`, the landing site. Desktop has two frontend entry
+points: the main window (`index.html` -> `src/main.tsx` -> `App.tsx`) and the
+overlay window (`overlay.html` -> `src/overlay-main.tsx` -> `Overlay.tsx`).
+Firing solutions come from `src/calculator/`, which is pure TypeScript and
+free of React and Tauri. Unless a path starts with `apps/`, paths in this file
+are relative to `apps/desktop/`. See `docs/ARCHITECTURE.md` for detail and
+`docs/BALLISTICS.md` for the firing data.
 
 ## Commands
 
-Package manager is pnpm.
+Package manager is pnpm. Commands below run from the workspace root.
 
 ```bash
 pnpm install
-pnpm dev      # vite dev server on :1420
-pnpm lint     # eslint
-pnpm test     # vitest (frontend)
-pnpm build    # tsc --noEmit, then vite build
-cargo test --manifest-path src-tauri/Cargo.toml
+pnpm dev      # desktop vite dev server on :1420
+pnpm dev:web  # website vite dev server
+pnpm lint     # eslint, both apps, config at the root
+pnpm test     # vitest, both apps
+pnpm build    # tsc --noEmit, then vite build, both apps
+cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml
 ```
 
 On this KDE Wayland machine the app dies at startup with
@@ -58,12 +61,14 @@ reader scanning `git log` needs before anything else.
   - `state`: shared Rust state in `src-tauri/src/state.rs`
   - `platform`: OS abstraction in `src-tauri/src/platform/`
   - `lib`: shared frontend code in `src/lib/`
+  - `website`: the landing site in `apps/website/`
   - `style`: styling in `src/styles.css`, Tailwind setup
   - `config`: `tauri.conf.json`, `vite.config.ts`, `Cargo.toml`, `package.json`,
-    capabilities, and the settings module in `src-tauri/src/config/`
+    the root workspace `package.json`/`pnpm-workspace.yaml`, capabilities, and
+    the settings module in `src-tauri/src/config/`
   - `ci`: `.github/workflows/`
   - `tests`: `*.test.*`, `src/test/`, Rust `#[test]`
-  - `docs`: `README.md`, `TODO.md`, `docs/`, this file
+  - `docs`: `README.md`, `docs/`, this file
 - **Description**: lowercase, imperative, no trailing period. State what the
   commit does, not what bug prompted it; the "why" of a fix belongs in the
   body, not stuffed into the summary line.

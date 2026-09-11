@@ -40,11 +40,11 @@ jobs:
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: src-tauri
+          workspaces: apps/desktop/src-tauri
           # A PR-branch cache is readable only from that branch, so saving one
           # just evicts main's.
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - run: pnpm install --frozen-lockfile
-      - run: pnpm build
-      - run: cargo check --manifest-path src-tauri/Cargo.toml
-      - run: cargo test --manifest-path src-tauri/Cargo.toml
+      - run: pnpm --filter @artydog/desktop build
+      - run: cargo check --manifest-path apps/desktop/src-tauri/Cargo.toml
+      - run: cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml

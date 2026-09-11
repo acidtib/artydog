@@ -25,13 +25,15 @@ function replaceFirst(path, pattern, replacement) {
   writeFileSync(file, after);
 }
 
+const APP = "apps/desktop";
+
 export function currentVersion() {
-  return JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")).version;
+  return JSON.parse(readFileSync(join(ROOT, `${APP}/package.json`), "utf8")).version;
 }
 
 export function setVersion(version) {
-  replaceFirst("package.json", /"version": "[^"]+"/, `"version": "${version}"`);
-  replaceFirst("src-tauri/tauri.conf.json", /"version": "[^"]+"/, `"version": "${version}"`);
-  replaceFirst("src-tauri/Cargo.toml", /^version = "[^"]+"$/m, `version = "${version}"`);
-  run("cargo", ["update", "--manifest-path", "src-tauri/Cargo.toml", "-p", "artydog"]);
+  replaceFirst(`${APP}/package.json`, /"version": "[^"]+"/, `"version": "${version}"`);
+  replaceFirst(`${APP}/src-tauri/tauri.conf.json`, /"version": "[^"]+"/, `"version": "${version}"`);
+  replaceFirst(`${APP}/src-tauri/Cargo.toml`, /^version = "[^"]+"$/m, `version = "${version}"`);
+  run("cargo", ["update", "--manifest-path", `${APP}/src-tauri/Cargo.toml`, "-p", "artydog"]);
 }

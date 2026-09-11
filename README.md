@@ -80,11 +80,18 @@ Other commands:
 pnpm lint     # eslint
 pnpm test     # vitest
 pnpm build    # tsc --noEmit, then vite build
-cargo test --manifest-path src-tauri/Cargo.toml
+cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml
 ```
 
-`cargo` commands need `dist/` to exist, so run `pnpm build` first on a fresh
-checkout.
+`cargo` commands need `apps/desktop/dist/` to exist, so run `pnpm build` first
+on a fresh checkout.
+
+## Website
+
+The landing site lives in `apps/website` and is a pnpm workspace sibling of the
+desktop app. It deploys to GitHub Pages from `main` via
+[.github/workflows/website.yml](.github/workflows/website.yml). Run it locally
+with `pnpm dev:web`.
 
 ## How it is put together
 
