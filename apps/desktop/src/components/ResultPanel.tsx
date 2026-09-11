@@ -27,7 +27,7 @@ export default function ResultPanel({ weapon, solution }: ResultPanelProps) {
     return (
       <div className="rounded border border-neutral-800 bg-neutral-950 p-4">
         <p className="text-sm text-neutral-500">
-          Enter coordinates and calculate to see a firing solution.
+          Enter coordinates to see a firing solution.
         </p>
       </div>
     );

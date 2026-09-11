@@ -4,7 +4,7 @@ use std::sync::Mutex;
 pub const OVERLAY_LABEL: &str = "overlay";
 pub const MAIN_LABEL: &str = "main";
 pub const OVERLAY_DEFAULT_WIDTH: u32 = 400;
-pub const OVERLAY_DEFAULT_HEIGHT: u32 = 300;
+pub const OVERLAY_DEFAULT_HEIGHT: u32 = 520;
 pub const OVERLAY_MIN_WIDTH: u32 = 280;
 pub const OVERLAY_MIN_HEIGHT: u32 = 200;
 
@@ -127,11 +127,37 @@ pub struct HotkeyStatus {
     pub error: Option<String>,
 }
 
+/// Raw calculator inputs shared by both windows. Text, not parsed values:
+/// each window derives errors and the solution locally, so nothing
+/// derived has to be kept in sync.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CalcState {
+    pub weapon_id: String,
+    pub mortar_x: String,
+    pub mortar_y: String,
+    pub target_x: String,
+    pub target_y: String,
+}
+
+impl Default for CalcState {
+    fn default() -> Self {
+        Self {
+            weapon_id: String::new(),
+            mortar_x: String::new(),
+            mortar_y: String::new(),
+            target_x: String::new(),
+            target_y: String::new(),
+        }
+    }
+}
+
 pub struct AppState {
     pub geometry: Mutex<Option<OverlayGeometry>>,
     /// The shortcut the user configured, registered or not.
     pub hotkey: Mutex<String>,
     pub hotkey_error: Mutex<Option<String>>,
+    pub calc: Mutex<CalcState>,
 }
 
 impl AppState {
@@ -140,6 +166,7 @@ impl AppState {
             geometry: Mutex::new(None),
             hotkey: Mutex::new(DEFAULT_HOTKEY.to_string()),
             hotkey_error: Mutex::new(None),
+            calc: Mutex::new(CalcState::default()),
         }
     }
 }
@@ -289,5 +316,35 @@ mod tests {
         let centered = geometry(0, 0).centered_in(LEFT);
         assert_eq!(centered.x, -1280 + (1280 - 400) / 2);
         assert_eq!(centered.y, (1024 - 300) / 2);
+    }
+
+    #[test]
+    fn calc_state_default_is_all_empty() {
+        let calc = CalcState::default();
+        assert_eq!(calc.weapon_id, "");
+        assert_eq!(calc.mortar_x, "");
+        assert_eq!(calc.mortar_y, "");
+        assert_eq!(calc.target_x, "");
+        assert_eq!(calc.target_y, "");
+    }
+
+    #[test]
+    fn calc_state_serializes_camel_case_for_the_frontend_contract() {
+        let calc = CalcState {
+            weapon_id: "mortar".to_string(),
+            mortar_x: "50".to_string(),
+            mortar_y: "50".to_string(),
+            target_x: "53".to_string(),
+            target_y: "54".to_string(),
+        };
+
+        let json = serde_json::to_string(&calc).unwrap();
+        assert_eq!(
+            json,
+            r#"{"weaponId":"mortar","mortarX":"50","mortarY":"50","targetX":"53","targetY":"54"}"#
+        );
+
+        let back: CalcState = serde_json::from_str(&json).unwrap();
+        assert_eq!(back, calc);
     }
 }

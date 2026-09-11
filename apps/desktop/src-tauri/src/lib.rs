@@ -83,6 +83,8 @@ pub fn run() {
             commands::reset_overlay_geometry,
             commands::get_hotkey_status,
             commands::set_hotkey,
+            commands::get_calc_state,
+            commands::set_calc_state,
         ])
         .setup(|app| {
             eprintln!(

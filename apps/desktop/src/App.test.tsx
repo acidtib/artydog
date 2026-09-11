@@ -7,6 +7,15 @@ import App from "./App";
 // OverlayStatus payload.
 const OVERLAY_VISIBILITY_EVENT = "overlay-visibility";
 
+// Must match CalcState in src-tauri/src/state.rs (serde camelCase).
+const EMPTY_CALC = {
+  weaponId: "",
+  mortarX: "",
+  mortarY: "",
+  targetX: "",
+  targetY: "",
+};
+
 const invokeMock = vi.fn();
 const listenMock = vi.fn();
 
@@ -30,6 +39,8 @@ vi.mock("@tauri-apps/plugin-process", () => ({
 function mockBackend() {
   invokeMock.mockImplementation((command: string) => {
     switch (command) {
+      case "get_calc_state":
+        return Promise.resolve(EMPTY_CALC);
       case "get_overlay_state":
       case "toggle_overlay":
         return Promise.resolve({ visible: false });
@@ -47,9 +58,11 @@ function mockBackend() {
 
 /// The handler the app registered for visibility events.
 function visibilityHandler(): (event: { payload: { visible: boolean } }) => void {
-  expect(listenMock).toHaveBeenCalled();
-  const calls = listenMock.mock.calls;
-  return calls[calls.length - 1][1];
+  const call = listenMock.mock.calls.find(([event]) => event === OVERLAY_VISIBILITY_EVENT);
+  if (call === undefined) {
+    throw new Error("overlay-visibility listener was not registered");
+  }
+  return call[1];
 }
 
 async function renderSettled() {
@@ -72,7 +85,8 @@ it("fetches the initial status once and registers the event listener", async () 
   expect(screen.getByText(/Alt \+ M/)).toBeInTheDocument();
 
   const commands = invokeMock.mock.calls.map((call) => call[0]);
-  expect(commands).toEqual(["get_overlay_state", "get_hotkey_status"]);
+  // App's own calc effect runs after its children's effects.
+  expect(commands).toEqual(["get_overlay_state", "get_hotkey_status", "get_calc_state"]);
   expect(listenMock).toHaveBeenCalledWith(
     OVERLAY_VISIBILITY_EVENT,
     expect.any(Function),
@@ -93,6 +107,9 @@ it("updates the status when Rust emits a visibility event", async () => {
 it("ignores the initial fetch result when an event arrived first", async () => {
   let resolveFetch: (value: { visible: boolean }) => void = () => {};
   invokeMock.mockImplementation((command: string) => {
+    if (command === "get_calc_state") {
+      return Promise.resolve(EMPTY_CALC);
+    }
     if (command === "get_overlay_state") {
       return new Promise((resolve) => {
         resolveFetch = resolve;
@@ -134,7 +151,12 @@ it("does not poll the backend after the initial load", async () => {  await rend
 });
 
 it("shows an error when the initial fetch fails", async () => {
-  invokeMock.mockRejectedValue(new Error("backend down"));
+  // The calc fetch must succeed, else /backend down/ matches two alerts.
+  invokeMock.mockImplementation((command: string) =>
+    command === "get_calc_state"
+      ? Promise.resolve(EMPTY_CALC)
+      : Promise.reject(new Error("backend down")),
+  );
   listenMock.mockResolvedValue(() => {});
 
   render(<App />);
@@ -147,6 +169,9 @@ it("toggle button invokes toggle_overlay and reflects the new status", async () 
   invokeMock.mockImplementation((command: string) => {
     if (command === "toggle_overlay") {
       return Promise.resolve({ visible: true });
+    }
+    if (command === "get_calc_state") {
+      return Promise.resolve(EMPTY_CALC);
     }
     if (command === "get_overlay_state") {
       return Promise.resolve({ visible: false });

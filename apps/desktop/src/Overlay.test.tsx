@@ -3,10 +3,15 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import Overlay from "./Overlay";
 
 const invokeMock = vi.fn();
+const listenMock = vi.fn();
 const startResizeDraggingMock = vi.fn();
 
 vi.mock("@tauri-apps/api/core", () => ({
   invoke: (...args: unknown[]) => invokeMock(...args),
+}));
+
+vi.mock("@tauri-apps/api/event", () => ({
+  listen: (...args: unknown[]) => listenMock(...args),
 }));
 
 vi.mock("@tauri-apps/api/window", () => ({
@@ -15,11 +20,25 @@ vi.mock("@tauri-apps/api/window", () => ({
   }),
 }));
 
+// Must match CalcState in src-tauri/src/state.rs (serde camelCase).
+const EMPTY_CALC = {
+  weaponId: "",
+  mortarX: "",
+  mortarY: "",
+  targetX: "",
+  targetY: "",
+};
+
 beforeEach(() => {
   invokeMock.mockReset();
+  listenMock.mockReset();
   startResizeDraggingMock.mockReset();
   startResizeDraggingMock.mockResolvedValue(undefined);
+  listenMock.mockResolvedValue(() => {});
   invokeMock.mockImplementation((command: string) => {
+    if (command === "get_calc_state") {
+      return Promise.resolve(EMPTY_CALC);
+    }
     if (command === "hide_overlay") {
       return Promise.resolve({ visible: false });
     }
@@ -37,7 +56,7 @@ it("renders the overlay controls", () => {
   expect(
     screen.getByRole("button", { name: "Hide Overlay" }),
   ).toBeInTheDocument();
-  expect(screen.getByPlaceholderText("Test Input")).toBeInTheDocument();
+  expect(screen.getByLabelText("Weapon")).toBeInTheDocument();
 });
 
 it("hide button invokes hide_overlay", async () => {
@@ -48,16 +67,6 @@ it("hide button invokes hide_overlay", async () => {
   await vi.waitFor(() => {
     expect(invokeMock).toHaveBeenCalledWith("hide_overlay");
   });
-});
-
-it("test button counts clicks", () => {
-  render(<Overlay />);
-
-  const button = screen.getByRole("button", { name: /Test Button/ });
-  fireEvent.click(button);
-  fireEvent.click(button);
-
-  expect(screen.getByRole("button", { name: "Test Button (2)" })).toBeInTheDocument();
 });
 
 it("the title bar is a drag region", () => {

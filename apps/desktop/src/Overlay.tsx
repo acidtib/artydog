@@ -1,29 +1,32 @@
 import { useCallback, useState } from "react";
+import OverlayCalculator from "./components/OverlayCalculator";
 import { hideOverlay } from "./lib/overlay";
 import { startOverlayResize } from "./lib/window";
+import { useCalcState } from "./lib/useCalcState";
 
 export default function Overlay() {
-  const [text, setText] = useState("");
-  const [count, setCount] = useState(0);
-  const [error, setError] = useState<string | null>(null);
+  const { calc, updateCalc, error: calcError } = useCalcState();
+  const [windowError, setWindowError] = useState<string | null>(null);
 
   const onHide = useCallback(async () => {
     try {
       await hideOverlay();
-      setError(null);
+      setWindowError(null);
     } catch (e) {
-      setError(String(e));
+      setWindowError(String(e));
     }
   }, []);
 
   const onResize = useCallback(async () => {
     try {
       await startOverlayResize();
-      setError(null);
+      setWindowError(null);
     } catch (e) {
-      setError(String(e));
+      setWindowError(String(e));
     }
   }, []);
+
+  const error = calcError ?? windowError;
 
   return (
     <div className="relative h-screen w-screen bg-neutral-900 text-neutral-100">
@@ -37,20 +40,8 @@ export default function Overlay() {
           <p className="pointer-events-none text-xs text-neutral-400">Overlay</p>
         </div>
 
-        <div className="flex flex-1 flex-col gap-3 p-4">
-          <input
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="Test Input"
-            className="w-full rounded border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm outline-none focus:border-emerald-500"
-          />
-          <button
-            type="button"
-            onClick={() => setCount((c) => c + 1)}
-            className="rounded bg-emerald-600 px-3 py-2 text-sm font-semibold hover:bg-emerald-500"
-          >
-            Test Button ({count})
-          </button>
+        <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-4">
+          <OverlayCalculator calc={calc} onChange={updateCalc} />
           <button
             type="button"
             onClick={() => void onHide()}
@@ -58,10 +49,11 @@ export default function Overlay() {
           >
             Hide Overlay
           </button>
-          <p className="mt-auto text-xs text-neutral-500">
-            Drag the title bar to move it.
-          </p>
-          {error !== null && <p className="text-xs text-red-400">{error}</p>}
+          {error !== null && (
+            <p role="alert" className="text-xs text-red-400">
+              {error}
+            </p>
+          )}
         </div>
       </div>
 

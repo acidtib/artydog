@@ -1,10 +1,19 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { useState } from "react";
 import { afterEach, expect, it } from "vitest";
+import { emptyCalcState } from "../calculator/derive";
+import type { CalcState } from "../calculator/types";
 import Calculator from "./Calculator";
 
 afterEach(() => {
   cleanup();
 });
+
+function Harness({ initial }: { initial?: CalcState }) {
+  const [calc, setCalc] = useState(initial ?? emptyCalcState());
+
+  return <Calculator calc={calc} onChange={setCalc} />;
+}
 
 function setPoint(legend: string, x: string, y: string) {
   const group = screen.getByRole("group", { name: legend });
@@ -13,89 +22,68 @@ function setPoint(legend: string, x: string, y: string) {
   fireEvent.change(within(group).getByLabelText("y"), { target: { value: y } });
 }
 
-function calculate() {
-  fireEvent.click(screen.getByRole("button", { name: "Calculate" }));
-}
-
 function rowValue(label: string): string {
   const row = screen.getByText(label).parentElement;
 
   return row?.lastElementChild?.textContent ?? "";
 }
 
-it("solves the reference vector entered through the form", () => {
-  render(<Calculator />);
+it("solves the reference vector live, with no button to click", () => {
+  render(<Harness />);
 
   setPoint("Mortar", "50", "50");
   setPoint("Target", "53", "54");
-  calculate();
 
   expect(rowValue("Distance")).toBe("500 m");
   expect(rowValue("Azimuth")).toBe("36.9°");
   expect(rowValue("Elevation")).toBe("461 mil");
 });
 
-// jsdom does not implement implicit submission, so this covers the form
-// submit path rather than an actual Enter keypress.
-it("calculates when the form is submitted rather than clicked", () => {
-  render(<Calculator />);
-
-  setPoint("Mortar", "50", "50");
-  setPoint("Target", "53", "54");
-
-  const group = screen.getByRole("group", { name: "Target" });
-  fireEvent.submit(within(group).getByLabelText("y").closest("form")!);
-
-  expect(rowValue("Distance")).toBe("500 m");
-});
-
 it("shows both arcs for a weapon that has them", () => {
-  render(<Calculator />);
+  render(<Harness />);
 
   fireEvent.change(screen.getByLabelText("Weapon"), {
     target: { value: "sph2" },
   });
   setPoint("Mortar", "50", "50");
   setPoint("Target", "65", "50");
-  calculate();
 
   expect(rowValue("Elevation Low")).toBe("84 mil");
   expect(rowValue("Elevation High")).toBe("1213 mil");
 });
 
-it("reports which field is missing instead of calculating", () => {
-  render(<Calculator />);
+it("stays neutral while fields are empty instead of demanding input", () => {
+  render(<Harness />);
 
-  setPoint("Mortar", "50", "");
-  setPoint("Target", "53", "54");
-  calculate();
-
-  const mortar = screen.getByRole("group", { name: "Mortar" });
-  expect(within(mortar).getByText("Required")).toBeInTheDocument();
-  expect(within(mortar).getByLabelText("y")).toHaveAttribute(
-    "aria-invalid",
-    "true",
-  );
-  expect(screen.queryByText("Distance")).not.toBeInTheDocument();
+  expect(screen.queryByText("Required")).not.toBeInTheDocument();
+  expect(screen.queryByText("Must be a number")).not.toBeInTheDocument();
+  expect(
+    screen.getByText("Enter coordinates to see a firing solution."),
+  ).toBeInTheDocument();
 });
 
-it("rejects non-numeric coordinates", () => {
-  render(<Calculator />);
+it("rejects non-numeric coordinates and keeps the other axis error", () => {
+  render(<Harness />);
 
-  setPoint("Mortar", "abc", "50");
+  setPoint("Mortar", "abc", "def");
   setPoint("Target", "53", "54");
-  calculate();
 
-  expect(screen.getByText("Must be a number")).toBeInTheDocument();
+  const mortar = screen.getByRole("group", { name: "Mortar" });
+  expect(within(mortar).getAllByText("Must be a number")).toHaveLength(2);
+
+  fireEvent.change(within(mortar).getByLabelText("x"), {
+    target: { value: "50" },
+  });
+
+  expect(within(mortar).getAllByText("Must be a number")).toHaveLength(1);
   expect(screen.queryByText("Distance")).not.toBeInTheDocument();
 });
 
 it("flags a target outside the weapon range", () => {
-  render(<Calculator />);
+  render(<Harness />);
 
   setPoint("Mortar", "50", "50");
   setPoint("Target", "50", "60");
-  calculate();
 
   expect(rowValue("Distance")).toBe("1000 m");
   expect(screen.getByRole("status")).toHaveTextContent(
@@ -103,43 +91,18 @@ it("flags a target outside the weapon range", () => {
   );
 });
 
-it("keeps the other axis error when one axis is fixed", () => {
-  render(<Calculator />);
-
-  setPoint("Mortar", "", "");
-  setPoint("Target", "53", "54");
-  calculate();
-
-  const mortar = screen.getByRole("group", { name: "Mortar" });
-  expect(within(mortar).getAllByText("Required")).toHaveLength(2);
-
-  fireEvent.change(within(mortar).getByLabelText("x"), {
-    target: { value: "50" },
-  });
-
-  expect(within(mortar).getAllByText("Required")).toHaveLength(1);
-  expect(within(mortar).getByLabelText("y")).toHaveAttribute(
-    "aria-invalid",
-    "true",
-  );
-  expect(within(mortar).getByLabelText("x")).toHaveAttribute(
-    "aria-invalid",
-    "false",
-  );
-});
-
-it("drops a stale solution when an input changes", () => {
-  render(<Calculator />);
+it("updates the solution live when the target moves", () => {
+  render(<Harness />);
 
   setPoint("Mortar", "50", "50");
   setPoint("Target", "53", "54");
-  calculate();
-  expect(screen.getByText("Distance")).toBeInTheDocument();
+  expect(rowValue("Distance")).toBe("500 m");
 
-  setPoint("Target", "53", "55");
+  fireEvent.change(
+    within(screen.getByRole("group", { name: "Target" })).getByLabelText("y"),
+    { target: { value: "60" } },
+  );
 
-  expect(screen.queryByText("Distance")).not.toBeInTheDocument();
-  expect(
-    screen.getByText(/Enter coordinates and calculate/),
-  ).toBeInTheDocument();
+  // Target is now (53, 60): sqrt(3^2 + 10^2) at 100 m per grid unit.
+  expect(rowValue("Distance")).toBe("1044 m");
 });

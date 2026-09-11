@@ -5,7 +5,7 @@ import CoordinateInput from "./CoordinateInput";
 import ResultPanel from "./ResultPanel";
 import WeaponSelect from "./WeaponSelect";
 
-interface CalculatorProps {
+interface OverlayCalculatorProps {
   calc: CalcState;
   onChange: (next: CalcState) => void;
 }
@@ -13,7 +13,10 @@ interface CalculatorProps {
 type PointName = "mortar" | "target";
 type Axis = "x" | "y";
 
-export default function Calculator({ calc, onChange }: CalculatorProps) {
+export default function OverlayCalculator({
+  calc,
+  onChange,
+}: OverlayCalculatorProps) {
   const view = deriveCalcView(calc);
 
   const editPoint = useCallback(
@@ -24,7 +27,7 @@ export default function Calculator({ calc, onChange }: CalculatorProps) {
   );
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-3">
       <WeaponSelect
         weapon={view.weapon}
         onWeaponChange={(id) => onChange({ ...calc, weaponId: id })}

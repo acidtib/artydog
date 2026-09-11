@@ -177,7 +177,25 @@ Application idle
            hide overlay
 ```
 
-## 7. Focus behavior
+## 7. Shared calculator state
+
+Both windows edit one calculator state owned by Rust. `CalcState`
+(`src-tauri/src/state.rs`) holds the raw input strings: `weaponId`,
+`mortarX`, `mortarY`, `targetX`, `targetY`. Writes go through the
+`set_calc_state` command, which stores the state and broadcasts
+`calc-state-changed` to every window. Reads go through `get_calc_state`
+on mount. `src/lib/useCalcState.ts` mirrors the state per window:
+edits apply locally first so typing never lags, and the event echo is
+the single path that reconciles both windows.
+
+Nothing derived is ever shared. Each window runs `deriveCalcView`
+(`src/calculator/derive.ts`), which resolves the weapon, parses the
+inputs, shows errors only for non-empty invalid fields, and computes
+the solution live. The main window renders `Calculator`, the overlay
+renders `OverlayCalculator`; both are controlled components over the
+same state.
+
+## 8. Focus behavior
 
 The overlay should receive keyboard/mouse events while the pointer is inside it.
 
@@ -197,7 +215,7 @@ Underlying game receives events
 
 This is preferable to implementing a global mouse hook.
 
-## 8. Global hotkey
+## 9. Global hotkey
 
 Use the official Tauri global-shortcut plugin rather than implementing separate low-level keyboard hooks for the first version.
 
@@ -218,7 +236,7 @@ Important:
 
 The plugin supports Windows and Linux.
 
-## 9. Game awareness
+## 10. Game awareness
 
 The first implementation does not need to identify WARDOGS.
 
@@ -236,7 +254,7 @@ Make this a future setting.
 
 Do not make process detection a dependency of the MVP.
 
-## 10. Optional foreground detection
+## 11. Optional foreground detection
 
 Later, implement:
 
@@ -264,28 +282,32 @@ pub trait GameDetector {
 
 Do not couple it to the calculator.
 
-## 11. Calculator state
+## 12. Calculator math
 
-Use a shared application state model:
+`src/calculator/` is pure TypeScript with no React or Tauri imports, so the
+math is testable without a browser or a running backend.
 
-```ts
-type Coordinate = {
-  x: number;
-  y: number;
-};
+Coordinates are game-world grid units; one unit is 100 m on every map.
 
-type CalculatorState = {
-  mortar: Coordinate;
-  target: Coordinate;
-  solution: Solution | null;
-};
+`solve()` (`src/calculator/solution.ts`) composes the pipeline:
+
+```text
+mortar + target grid coordinates
+        ↓
+distanceMeters + azimuthDegrees
+        ↓
+range check against the weapon envelope
+        ↓
+elevationMil per arc from the weapon firing tables
 ```
 
-The state exists independently of the current window.
+Weapon definitions and firing tables live in
+`src/calculator/data/weapons.json`.
 
-Both the normal window and overlay consume the same state.
+How inputs and solutions flow between windows is covered in section 7,
+"Shared calculator state".
 
-## 12. Configuration persistence
+## 13. Configuration persistence
 
 Persist:
 
@@ -314,7 +336,7 @@ Example:
 
 Use a versioned configuration format so future releases can migrate settings.
 
-## 13. Coordinate system
+## 14. Coordinate system
 
 Do not assume WARDOGS coordinates are screen coordinates.
 
@@ -332,7 +354,7 @@ ScreenPosition
 
 This becomes especially important if the project later adds map clicking.
 
-## 14. Future map mode
+## 15. Future map mode
 
 The architecture should leave room for a second interface:
 
@@ -361,7 +383,7 @@ Bearing / distance / elevation
 
 Do not implement map rendering in the first MVP.
 
-## 15. Why Tauri
+## 16. Why Tauri
 
 Tauri is a strong fit because the app is mostly UI with a small amount of native desktop functionality.
 
@@ -375,7 +397,7 @@ The web UI gives fast iteration for the calculator while Rust handles:
 
 Tauri's window API supports features such as always-on-top, transparency, monitor detection, positioning, and visibility. See the official API documentation.
 
-## 16. Why not Electron
+## 17. Why not Electron
 
 Electron would work, but it adds a full Chromium runtime and Node.js runtime.
 
@@ -389,7 +411,7 @@ Tauri gives the project:
 - cross-platform packaging
 - clean native integration
 
-## 17. Why not a pure Rust UI
+## 18. Why not a pure Rust UI
 
 A pure Rust GUI is possible, but React/TypeScript is more productive for this application.
 
@@ -405,7 +427,7 @@ The UI will likely evolve rapidly:
 
 React provides a large ecosystem for these interfaces.
 
-## 18. Security model
+## 19. Security model
 
 The frontend should have minimal Tauri permissions.
 
@@ -429,7 +451,7 @@ OverlayController
 
 rather than allowing generic system execution.
 
-## 19. Testing layers
+## 20. Testing layers
 
 ### Calculator tests
 

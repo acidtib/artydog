@@ -409,7 +409,7 @@ MVP is complete when all of the following are true:
 - [ ] Pointer outside overlay can interact with WARDOGS.
 - [x] Overlay position persists.
 - [x] Overlay size persists.
-- [ ] Calculator state persists while toggling overlay.
+- [x] Calculator state persists while toggling overlay.
 - [ ] Works on Windows.
 - [ ] Works on KDE Wayland Linux.
 - [ ] No game process injection is required.

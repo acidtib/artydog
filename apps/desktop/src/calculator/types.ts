@@ -40,3 +40,13 @@ export interface Solution {
   inRange: boolean;
   arcs: readonly ArcSolution[];
 }
+
+/// Raw calculator inputs shared between the main and overlay windows.
+/// Serialized camelCase on the Rust side (CalcState in src-tauri state.rs).
+export interface CalcState {
+  weaponId: string;
+  mortarX: string;
+  mortarY: string;
+  targetX: string;
+  targetY: string;
+}

@@ -2,11 +2,11 @@
 //!
 //! Flow is always: React -> command -> OverlayManager -> Tauri window.
 
-use tauri::{AppHandle, State};
+use tauri::{AppHandle, Emitter, State};
 
 use crate::hotkey::{self, manager::hotkey_registered};
 use crate::overlay::{OverlayController, OverlayManager};
-use crate::state::{AppState, HotkeyStatus, OverlayGeometry, OverlayStatus};
+use crate::state::{AppState, CalcState, HotkeyStatus, OverlayGeometry, OverlayStatus};
 
 fn status(manager: &OverlayManager) -> Result<OverlayStatus, String> {
     Ok(OverlayStatus {
@@ -101,4 +101,33 @@ pub fn set_hotkey(
 ) -> Result<HotkeyStatus, String> {
     hotkey::set_hotkey(&app, &shortcut)?;
     hotkey_status(&app, &state)
+}
+
+/// Mirrored by `CALC_STATE_EVENT` in `src/lib/calculatorState.ts`.
+pub const CALC_STATE_EVENT: &str = "calc-state-changed";
+
+#[tauri::command]
+pub fn get_calc_state(state: State<'_, AppState>) -> Result<CalcState, String> {
+    state
+        .calc
+        .lock()
+        .map_err(|e| format!("calc state lock poisoned: {e}"))
+        .map(|guard| guard.clone())
+}
+
+#[tauri::command]
+pub fn set_calc_state(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    calc: CalcState,
+) -> Result<CalcState, String> {
+    *state
+        .calc
+        .lock()
+        .map_err(|e| format!("calc state lock poisoned: {e}"))? = calc.clone();
+    // Best-effort broadcast, same policy as the visibility event.
+    if let Err(e) = app.emit(CALC_STATE_EVENT, &calc) {
+        eprintln!("[calc] failed to emit calc state event: {e}");
+    }
+    Ok(calc)
 }
