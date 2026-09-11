@@ -77,6 +77,24 @@ Error
 
 Do not overcomplicate the initial implementation.
 
+## The toggle shortcut
+
+The default is `Alt+M`, not bare `M`.
+
+A registered global shortcut is exclusive on every platform: the OS routes
+the key to the registering application and the foreground one never sees it.
+WARDOGS binds bare `M` to its map, so claiming `M` stopped the map from
+opening at all while ArtyDog ran. The modifier keeps the two apart.
+
+The shortcut is stored in `config.json` and editable from the main window,
+which captures the next key combination pressed. Rebinding releases the old
+shortcut before claiming the new one, and a shortcut the OS refuses leaves
+the previous one in place rather than dropping the toggle entirely.
+
+Anything bound here is taken from the game for as long as ArtyDog runs, so a
+user who rebinds onto a key WARDOGS needs will lose it in game. That is their
+choice to make; the default avoids it.
+
 ## Overlay commands
 
 Expose a small native API:
@@ -216,7 +234,7 @@ Do not add X11 dependencies unless an actual requirement is demonstrated.
 
 ### Known limitation: the global hotkey
 
-`global-hotkey` grabs through X11, so bare `M` does not fire under native
+`global-hotkey` grabs through X11, so the shortcut does not fire under native
 Wayland. Confirmed on KDE Plasma. The tray menu and the main window's Toggle
 Overlay button work regardless, and the hotkey does fire under XWayland
 (`GDK_BACKEND=x11`).
@@ -248,27 +266,6 @@ Potential responsibilities:
 - focus workarounds
 
 Do not use Windows APIs in shared application logic.
-
-### The toggle key is a hook, not a hotkey
-
-`RegisterHotKey` is exclusive: Windows delivers the key to the registering
-window and the foreground application never sees it. WARDOGS binds `M` to its
-map, so registering `M` stopped the map from opening while ArtyDog ran.
-
-`platform/windows.rs` installs a `WH_KEYBOARD_LL` hook instead. It watches for
-`M`, queues the toggle, and always calls `CallNextHookEx` so the key still
-reaches the game. Consequences worth knowing:
-
-- The callback must return fast or Windows silently drops the hook, so it only
-  queues work onto the main thread and never toggles inline.
-- The hook sees auto-repeat, so the toggle fires on the up-to-down edge only.
-- Injected keys are ignored, so the toggle answers to a real keypress.
-- `M` now also reaches ArtyDog's own inputs. Typing `m` in a field toggles the
-  overlay as well; the fields that matter are numeric, so this is left alone
-  until the hotkey becomes configurable.
-- A system-wide keyboard hook can look like a keylogger to anti-cheat and
-  antivirus software. This is a deliberate, accepted trade for `M` opening the
-  map and the calculator together.
 
 ## Platform abstraction
 
@@ -381,8 +378,8 @@ move events to write each one.
 - [ ] Type coordinates
 - [ ] Move pointer outside
 - [ ] Interact with WARDOGS
-- [ ] Press M to hide
-- [ ] Press M to show
+- [ ] Press the shortcut to hide
+- [ ] Press the shortcut to show
 - [ ] Alt-tab
 - [ ] Minimize game
 - [ ] Restore game
@@ -399,7 +396,7 @@ move events to write each one.
 - [ ] Click text field
 - [ ] Move pointer outside
 - [ ] Return focus to game
-- [ ] M toggle
+- [ ] Shortcut toggle
 - [ ] Alt-tab
 - [ ] Multiple monitors
 - [ ] Fractional scaling

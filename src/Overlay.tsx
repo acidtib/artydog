@@ -59,7 +59,7 @@ export default function Overlay() {
             Hide Overlay
           </button>
           <p className="mt-auto text-xs text-neutral-500">
-            M toggles the overlay. Drag the title bar to move it.
+            Drag the title bar to move it.
           </p>
           {error !== null && <p className="text-xs text-red-400">{error}</p>}
         </div>

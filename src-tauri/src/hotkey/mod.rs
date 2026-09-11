@@ -1,5 +1,5 @@
-//! Global hotkey handling (`M` toggles the overlay).
+//! Global hotkey handling for the overlay toggle.
 
 pub mod manager;
 
-pub use manager::{handle_hotkey, register_toggle_shortcut, TOGGLE_SHORTCUT_LABEL};
+pub use manager::{current_hotkey, handle_hotkey, register_saved_hotkey, set_hotkey};

@@ -4,7 +4,7 @@
 
 use tauri::{AppHandle, State};
 
-use crate::hotkey::{manager::hotkey_registered, TOGGLE_SHORTCUT_LABEL};
+use crate::hotkey::{self, manager::hotkey_registered};
 use crate::overlay::{OverlayController, OverlayManager};
 use crate::state::{AppState, HotkeyStatus, OverlayGeometry, OverlayStatus};
 
@@ -72,19 +72,33 @@ pub fn reset_overlay_geometry(app: AppHandle) -> Result<OverlayGeometry, String>
     OverlayManager::new(app).reset_geometry()
 }
 
-#[tauri::command]
-pub fn get_hotkey_status(
-    app: AppHandle,
-    state: State<'_, AppState>,
-) -> Result<HotkeyStatus, String> {
+fn hotkey_status(app: &AppHandle, state: &AppState) -> Result<HotkeyStatus, String> {
     let error = state
         .hotkey_error
         .lock()
         .map_err(|e| format!("hotkey state lock poisoned: {e}"))?
         .clone();
     Ok(HotkeyStatus {
-        shortcut: TOGGLE_SHORTCUT_LABEL.to_string(),
-        registered: error.is_none() && hotkey_registered(&app),
+        shortcut: hotkey::current_hotkey(app),
+        registered: error.is_none() && hotkey_registered(app),
         error,
     })
+}
+
+#[tauri::command]
+pub fn get_hotkey_status(
+    app: AppHandle,
+    state: State<'_, AppState>,
+) -> Result<HotkeyStatus, String> {
+    hotkey_status(&app, &state)
+}
+
+#[tauri::command]
+pub fn set_hotkey(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    shortcut: String,
+) -> Result<HotkeyStatus, String> {
+    hotkey::set_hotkey(&app, &shortcut)?;
+    hotkey_status(&app, &state)
 }

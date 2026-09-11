@@ -84,21 +84,24 @@ The user can run WARDOGS and place the overlay above it.
 
 ---
 
-## Milestone 3 - Global M hotkey
+## Milestone 3 - Global hotkey
 
 Add the Tauri global-shortcut plugin.
 
 Default:
 
 ```text
-M
+Alt+M
 ```
+
+A registered shortcut is exclusive, and WARDOGS binds bare `M` to its map, so
+the default carries a modifier.
 
 Behavior:
 
 ```text
-M → show overlay
-M → hide overlay
+Alt+M → show overlay
+Alt+M → hide overlay
 ```
 
 Handle registration errors.
@@ -107,7 +110,7 @@ Do not implement WARDOGS process detection yet.
 
 ### Done when
 
-M reliably toggles the overlay while WARDOGS has focus.
+The shortcut reliably toggles the overlay while WARDOGS has focus.
 
 ---
 
@@ -400,7 +403,7 @@ MVP is complete when all of the following are true:
 - [ ] Application launches normally.
 - [ ] Calculator works as a normal desktop application.
 - [ ] WARDOGS can run independently.
-- [ ] M toggles the overlay.
+- [x] The shortcut toggles the overlay.
 - [ ] Overlay appears above WARDOGS.
 - [ ] Overlay is interactive.
 - [ ] Pointer outside overlay can interact with WARDOGS.

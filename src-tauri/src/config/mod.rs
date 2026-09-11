@@ -13,13 +13,16 @@ use crate::state::OverlayGeometry;
 pub const FILE_NAME: &str = "config.json";
 pub const SCHEMA_VERSION: u32 = 1;
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Config {
     pub schema_version: u32,
     /// Absent until the overlay has been placed at least once.
     #[serde(default)]
     pub overlay: Option<OverlayGeometry>,
+    /// Absent until the user changes it, which means the default applies.
+    #[serde(default)]
+    pub hotkey: Option<String>,
 }
 
 impl Default for Config {
@@ -27,12 +30,26 @@ impl Default for Config {
         Self {
             schema_version: SCHEMA_VERSION,
             overlay: None,
+            hotkey: None,
         }
     }
 }
 
 pub fn overlay_geometry(app: &AppHandle) -> Option<OverlayGeometry> {
     persistence::load(app).overlay
+}
+
+pub fn hotkey(app: &AppHandle) -> Option<String> {
+    persistence::load(app).hotkey
+}
+
+/// Writes `hotkey` into the stored config, leaving other settings intact.
+pub fn save_hotkey(app: &AppHandle, hotkey: &str) -> Result<(), String> {
+    let config = Config {
+        hotkey: Some(hotkey.to_string()),
+        ..persistence::load(app)
+    };
+    persistence::save(app, config)
 }
 
 /// Writes `geometry` into the stored config, leaving other settings intact.
@@ -65,10 +82,12 @@ mod tests {
                 width: 420,
                 height: 520,
             }),
+            hotkey: Some("Alt+M".to_string()),
         };
         let raw = serde_json::to_string(&config).unwrap();
         let parsed: Config = serde_json::from_str(&raw).unwrap();
         assert_eq!(parsed.overlay, config.overlay);
+        assert_eq!(parsed.hotkey, config.hotkey);
     }
 
     #[test]
@@ -81,5 +100,6 @@ mod tests {
     fn a_file_without_an_overlay_key_still_parses() {
         let parsed: Config = serde_json::from_str(r#"{"schemaVersion":1}"#).unwrap();
         assert!(parsed.overlay.is_none());
+        assert!(parsed.hotkey.is_none());
     }
 }
