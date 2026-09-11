@@ -249,6 +249,27 @@ Potential responsibilities:
 
 Do not use Windows APIs in shared application logic.
 
+### The toggle key is a hook, not a hotkey
+
+`RegisterHotKey` is exclusive: Windows delivers the key to the registering
+window and the foreground application never sees it. WARDOGS binds `M` to its
+map, so registering `M` stopped the map from opening while ArtyDog ran.
+
+`platform/windows.rs` installs a `WH_KEYBOARD_LL` hook instead. It watches for
+`M`, queues the toggle, and always calls `CallNextHookEx` so the key still
+reaches the game. Consequences worth knowing:
+
+- The callback must return fast or Windows silently drops the hook, so it only
+  queues work onto the main thread and never toggles inline.
+- The hook sees auto-repeat, so the toggle fires on the up-to-down edge only.
+- Injected keys are ignored, so the toggle answers to a real keypress.
+- `M` now also reaches ArtyDog's own inputs. Typing `m` in a field toggles the
+  overlay as well; the fields that matter are numeric, so this is left alone
+  until the hotkey becomes configurable.
+- A system-wide keyboard hook can look like a keylogger to anti-cheat and
+  antivirus software. This is a deliberate, accepted trade for `M` opening the
+  map and the calculator together.
+
 ## Platform abstraction
 
 Recommended structure:

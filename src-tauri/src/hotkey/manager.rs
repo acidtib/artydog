@@ -7,6 +7,7 @@ use tauri::AppHandle;
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Shortcut};
 
 use crate::overlay::{OverlayController, OverlayManager};
+use crate::platform;
 
 pub const TOGGLE_SHORTCUT_LABEL: &str = "M";
 
@@ -15,6 +16,11 @@ fn toggle_shortcut() -> Shortcut {
 }
 
 pub fn register_toggle_shortcut(app: &AppHandle) -> Result<(), String> {
+    // Where the platform can watch the key without claiming it, prefer that:
+    // the plugin's grab would stop WARDOGS from ever seeing `M`.
+    if platform::install_toggle_hook(app)? {
+        return Ok(());
+    }
     let shortcut = toggle_shortcut();
     app.global_shortcut().register(shortcut).map_err(|e| {
         format!(
@@ -32,5 +38,5 @@ pub fn handle_hotkey(app: &AppHandle) {
 }
 
 pub fn hotkey_registered(app: &AppHandle) -> bool {
-    app.global_shortcut().is_registered(toggle_shortcut())
+    platform::toggle_hook_installed() || app.global_shortcut().is_registered(toggle_shortcut())
 }
