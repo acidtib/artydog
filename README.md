@@ -24,7 +24,7 @@ anything else is a good way to get people banned.
 
 ## Install
 
-Grab the latest build from [Releases](https://github.com/acidtib/potato/releases/latest).
+Grab the latest build from [Releases](https://github.com/acidtib/artydog/releases/latest).
 
 - **Windows**: `ArtyDog_x64-setup.exe`. It is not code-signed, so SmartScreen
   will warn on first run.

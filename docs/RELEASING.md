@@ -40,12 +40,14 @@ releases repository or object storage, and `plugins.updater.endpoints` in
 `tauri.conf.json` has to follow.
 
 That endpoint contains the repository name, so renaming the repository means
-updating it in the same commit.
+updating it in the same commit. Installs built before a rename keep the old
+URL and rely on GitHub redirecting it, which stops the day something else
+claims the old name. Do not reuse a retired repository name.
 
 ## How updating works
 
 The app checks
-`https://github.com/acidtib/potato/releases/latest/download/latest.json` on
+`https://github.com/acidtib/artydog/releases/latest/download/latest.json` on
 main-window start. If a newer version is there, a banner offers "Update &
 restart"; the overlay stays clean during play. Failures are silent, so before
 the first stable release exists the 404 shows nothing.
