@@ -49,7 +49,7 @@ if (dryRun) {
   process.exit(0);
 }
 
-run("git", ["add", "package.json", "src-tauri/tauri.conf.json", "src-tauri/Cargo.toml", "src-tauri/Cargo.lock"]);
+run("git", ["add", "apps/desktop/package.json", "apps/desktop/src-tauri/tauri.conf.json", "apps/desktop/src-tauri/Cargo.toml", "apps/desktop/src-tauri/Cargo.lock"]);
 run("git", ["commit", "-m", `config: bump version to ${version}`]);
 run("git", ["tag", tag]);
 

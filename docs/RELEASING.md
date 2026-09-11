@@ -15,11 +15,12 @@ pnpm release:patch   # or release:minor, release:major
 git push origin main app-v0.1.1
 ```
 
-`pnpm release:*` moves the version in `package.json`, `tauri.conf.json`,
-`Cargo.toml` and `Cargo.lock` together, commits as `config: bump version to
-X.Y.Z`, and tags `app-vX.Y.Z`. It does not push: pushing the tag is what
-publishes the release, so it stays a separate decision. Add `--dry-run` to
-rewrite the manifests without committing.
+`pnpm release:*` (the scripts live at the workspace root) moves the version in
+`apps/desktop/package.json` and the `apps/desktop/src-tauri` manifests
+(`tauri.conf.json`, `Cargo.toml`, `Cargo.lock`) together, commits as `config:
+bump version to X.Y.Z`, and tags `app-vX.Y.Z`. It does not push: pushing the
+tag is what publishes the release, so it stays a separate decision. Add
+`--dry-run` to rewrite the manifests without committing.
 
 Pushing the tag builds a normal (non-prerelease) GitHub release. Because it
 is not a prerelease, it becomes what `releases/latest` resolves to, which is

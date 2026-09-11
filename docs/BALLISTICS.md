@@ -1,6 +1,6 @@
 # Ballistics and coordinates
 
-Source data for the calculator, in `src/calculator/data/weapons.json`.
+Source data for the calculator, in `apps/desktop/src/calculator/data/weapons.json`.
 Extracted and verified 2026-09-10.
 
 This answers the open question left by `docs/MILESTONES.md` Milestone 1: the
