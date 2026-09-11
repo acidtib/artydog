@@ -45,16 +45,13 @@ it("renders nothing when there is no update", async () => {
   expect(container).toBeEmptyDOMElement();
 });
 
-it("stays silent when the endpoint fails", async () => {
-  // No stable release exists yet, so the endpoint 404s on every launch.
+it("says so when the check fails instead of looking up to date", async () => {
   checkMock.mockRejectedValue(new Error("404"));
 
-  const { container } = render(<UpdateBanner />);
+  render(<UpdateBanner />);
 
-  await vi.waitFor(() => {
-    expect(checkMock).toHaveBeenCalled();
-  });
-  expect(container).toBeEmptyDOMElement();
+  expect(await screen.findByText(/Update check failed/)).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /Update & restart/ })).not.toBeInTheDocument();
 });
 
 it("announces an available update", async () => {

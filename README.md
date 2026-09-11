@@ -1,99 +1,108 @@
 # ArtyDog
 
-Technical implementation plan for a cross-platform desktop mortar calculator that works as:
+A mortar firing calculator for [WARDOGS](https://store.steampowered.com/), usable
+as a normal desktop application or as an interactive overlay on top of the game.
 
-1. A normal desktop application.
-2. An interactive overlay that can be shown over WARDOGS while the game is running.
+Enter your mortar position and your target, get the distance, azimuth and
+elevation. Press a global shortcut to bring the calculator up over the game and
+press it again to send it away.
 
-## Recommended stack
+> **Status: early.** The calculator works in the main window. The overlay window
+> itself works (it shows, hides, drags, resizes, remembers where you put it) but
+> still carries placeholder contents rather than the calculator. See
+> [docs/MILESTONES.md](docs/MILESTONES.md) for where this is going.
 
-- **Tauri 2** - desktop shell and native window management
-- **Rust** - native/backend layer and platform-specific overlay implementation
-- **React + TypeScript** - application UI and calculator logic
-- **Vite** - frontend build tooling
-- **Tailwind CSS** - UI styling
-- **Tauri Global Shortcut plugin** - global hotkey support
-- **Serde** - Rust state/config serialization
-- **Platform abstraction** - Windows and Linux implementations behind one Rust trait
+## It does not touch the game
 
-Tauri provides native window APIs including always-on-top, transparency, positioning, monitor detection, and visibility controls. The official global-shortcut plugin supports Windows and Linux. See the official documentation links at the end of this document.
+ArtyDog is an ordinary desktop window that happens to sit above WARDOGS. It
+does not inject code, read game memory, modify game files, or send input to the
+game. It has no idea WARDOGS is even running. You type coordinates; it does
+arithmetic.
 
-## Core product behavior
+This is a deliberate design constraint rather than a temporary state, because
+anything else is a good way to get people banned.
 
-### Normal mode
+## Install
 
-The application opens like any other desktop application:
+Grab the latest build from [Releases](https://github.com/acidtib/potato/releases/latest).
 
-```text
-┌─────────────────────────────────┐
-│ ArtyDog                       │
-├─────────────────────────────────┤
-│ Mortar                          │
-│ X [________]  Y [________]      │
-│                                 │
-│ Target                          │
-│ X [________]  Y [________]      │
-│                                 │
-│        [ Calculate ]             │
-│                                 │
-│ Distance     842 m               │
-│ Bearing      127.4°              │
-│ Elevation     43.2°              │
-└─────────────────────────────────┘
+- **Windows**: `ArtyDog_x64-setup.exe`. It is not code-signed, so SmartScreen
+  will warn on first run.
+- **Linux**: `.AppImage` (recommended) or `.deb`.
+
+The app updates itself: when a new release is out, the main window offers to
+install it and restart. Only the Windows installer and the AppImage can
+self-update; a `.deb` install has to be upgraded by hand.
+
+## Using it
+
+1. Open ArtyDog, then start WARDOGS.
+2. Press **Alt+M** to show or hide the overlay. The shortcut is configurable in
+   the main window.
+3. Closing the main window hides it to the system tray so the shortcut keeps
+   working. Quit from the tray menu.
+
+The overlay remembers its position and size between sessions, and recovers to
+your primary monitor if it was left on a display that is no longer attached.
+
+### The shortcut takes the key from the game
+
+A global shortcut is exclusive on every platform: while ArtyDog is running, the
+key it is bound to never reaches WARDOGS. The default is `Alt+M` rather than
+bare `M` precisely because WARDOGS uses `M` for its map. If you rebind ArtyDog
+onto a key the game needs, you will lose that key in game.
+
+## Known limitations
+
+- **Linux**: the global shortcut is registered through X11, so it does not fire
+  under native Wayland. The tray menu and the main window's Toggle Overlay
+  button work regardless. Under XWayland (`GDK_BACKEND=x11`) the shortcut works.
+- **Linux**: on some GPU setups the app exits at startup with
+  `Error 71 (Protocol error) dispatching to Wayland display`. Launch it with
+  `WEBKIT_DISABLE_DMABUF_RENDERER=1`.
+- WARDOGS does not currently have full Linux support, so Windows is the primary
+  target.
+
+## Building from source
+
+Requires [pnpm](https://pnpm.io/) and a Rust toolchain, plus the
+[Tauri prerequisites](https://v2.tauri.app/start/prerequisites/) for your
+platform.
+
+```bash
+pnpm install
+pnpm tauri dev
 ```
 
-### Overlay mode
+Other commands:
 
-When WARDOGS is running, the user presses `Alt`+`M` (configurable).
-
-The calculator overlay appears above the game and remains interactive.
-
-Press it again to hide it.
-
-The calculator process does not restart or lose state when the overlay is hidden.
-
-## Important implementation principle
-
-Do **not** make the first version dependent on reading WARDOGS memory, extracting game state, injecting code into the game, or parsing the game's rendering pipeline.
-
-The initial application is completely external:
-
-```text
-User enters coordinates
-        ↓
-Calculator
-        ↓
-Mortar solution
+```bash
+pnpm lint     # eslint
+pnpm test     # vitest
+pnpm build    # tsc --noEmit, then vite build
+cargo test --manifest-path src-tauri/Cargo.toml
 ```
 
-WARDOGS only provides the visual context in which the overlay is displayed.
+`cargo` commands need `dist/` to exist, so run `pnpm build` first on a fresh
+checkout.
 
-## MVP success criteria
+## How it is put together
 
-The first milestone is not the ballistic calculator.
+A Tauri 2 shell with a React and TypeScript frontend over a Rust backend. Two
+windows, one main and one overlay, out of one process. The ballistics are plain
+TypeScript with no React or Tauri anywhere near them, so they can be tested on
+their own.
 
-The first milestone is proving:
+| Document | What is in it |
+| --- | --- |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Module layout and the reasoning behind it |
+| [docs/OVERLAY.md](docs/OVERLAY.md) | Overlay window design, platform behavior, geometry rules |
+| [docs/BALLISTICS.md](docs/BALLISTICS.md) | Firing tables and coordinate conversion |
+| [docs/MILESTONES.md](docs/MILESTONES.md) | Build order and what counts as done |
+| [docs/RELEASING.md](docs/RELEASING.md) | Cutting a release, signing, key rotation |
+| [AGENTS.md](AGENTS.md) | Conventions for anyone (or anything) writing code here |
 
-- WARDOGS can remain running.
-- The application can run normally as a desktop app.
-- The shortcut can toggle the overlay.
-- The overlay stays above the game.
-- The overlay can receive mouse/keyboard input.
-- The user can move the pointer away from the overlay and continue interacting with the game.
-- The overlay remembers its size and position.
-- The same architecture works on Windows and KDE Wayland Linux.
+## Not affiliated with WARDOGS
 
-Only after this is reliable should the calculator logic be built out.
-
-## Releasing
-
-Pushes to `main` publish a rolling bleeding-edge prerelease. Cutting a stable
-release is `pnpm release:patch` then pushing the tag it makes. The app updates
-itself from the latest stable release. See `docs/RELEASING.md`.
-
-## Documentation sources
-
-- Tauri window API: https://tauri.app/reference/javascript/api/namespacewindow/
-- Tauri window customization: https://tauri.app/learn/window-customization/
-- Tauri global shortcut plugin: https://v2.tauri.app/plugin/global-shortcut/
-- Tauri prerequisites/platform support: https://v2.tauri.app/start/prerequisites/
+This is an unofficial fan-made tool, not connected to or endorsed by the
+developers of WARDOGS. All trademarks belong to their respective owners.
