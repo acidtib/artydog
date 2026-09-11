@@ -147,10 +147,12 @@ and `ResultPanel`. The form, submit handler, Calculate button, and the
 "solution belongs to its inputs" bookkeeping are deleted: the view is
 always derived.
 
-`src/components/OverlayCalculator.tsx` (new): same props as `Calculator`.
-Compact layout with tighter spacing and smaller text to fit the 400x300
-default geometry, same neutral palette and emerald accents, reusing
-`WeaponSelect`, `CoordinateInput`, and `ResultPanel`.
+`src/components/OverlayCalculator.tsx` (new): same props as `Calculator`,
+same neutral palette and emerald accents, with tighter spacing. It reuses
+`WeaponSelect`, `CoordinateInput`, and `ResultPanel` unmodified. The
+default overlay geometry grows from 400x300 to 400x520 so the weapon,
+inputs, and results are all visible without scrolling; a smaller saved
+size scrolls (`overflow-y-auto`).
 
 `src/Overlay.tsx` (rewire): owns `useCalcState`, keeps the drag bar,
 resize corner, hide button, and a single error line that now reports both
@@ -219,7 +221,8 @@ Manual verification on this machine:
 ## File manifest
 
 Rust: `src-tauri/src/state.rs`, `src-tauri/src/commands.rs`,
-`src-tauri/src/lib.rs`.
+`src-tauri/src/lib.rs`, `src-tauri/tauri.conf.json` (overlay default
+height).
 Frontend: `src/calculator/types.ts` (CalcState), `src/calculator/derive.ts`
 (new), `src/lib/calculatorState.ts` (new), `src/lib/useCalcState.ts` (new),
 `src/components/WeaponSelect.tsx` (new), `src/components/Calculator.tsx`
