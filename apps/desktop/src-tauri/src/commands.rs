@@ -14,18 +14,23 @@ fn status(manager: &OverlayManager) -> Result<OverlayStatus, String> {
     })
 }
 
+/// The window manager may still be mapping the window, so `is_visible()` can lag the request.
+fn requested(visible: bool) -> Result<OverlayStatus, String> {
+    Ok(OverlayStatus { visible })
+}
+
 #[tauri::command]
 pub fn show_overlay(app: AppHandle, _state: State<'_, AppState>) -> Result<OverlayStatus, String> {
     let manager = OverlayManager::new(app);
     manager.show()?;
-    status(&manager)
+    requested(true)
 }
 
 #[tauri::command]
 pub fn hide_overlay(app: AppHandle, _state: State<'_, AppState>) -> Result<OverlayStatus, String> {
     let manager = OverlayManager::new(app);
     manager.hide()?;
-    status(&manager)
+    requested(false)
 }
 
 #[tauri::command]
@@ -34,8 +39,10 @@ pub fn toggle_overlay(
     _state: State<'_, AppState>,
 ) -> Result<OverlayStatus, String> {
     let manager = OverlayManager::new(app);
+    // Read before toggling: after it, the same lag applies.
+    let was_visible = manager.is_visible()?;
     manager.toggle()?;
-    status(&manager)
+    requested(!was_visible)
 }
 
 #[tauri::command]
