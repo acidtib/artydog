@@ -23,7 +23,13 @@ pnpm lint     # eslint, both apps, config at the root
 pnpm test     # vitest, both apps
 pnpm build    # tsc --noEmit, then vite build, both apps
 cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml
+pnpm --filter @artydog/desktop exec vitest run src/calculator/derive.test.ts  # one file
 ```
+
+Releases: `pnpm release:patch|minor|major` (`scripts/bump.mjs`) commits and
+tags `app-v<version>` but does not push. Pushing the tag publishes a stable
+release, and every push to `main` publishes a bleeding-edge build, so never
+push unless asked.
 
 On this KDE Wayland machine the app dies at startup with
 `Gdk-Message: Error 71 (Protocol error) dispatching to Wayland display`
@@ -65,7 +71,7 @@ reader scanning `git log` needs before anything else.
   - `style`: styling in `src/styles.css`, Tailwind setup
   - `config`: `tauri.conf.json`, `vite.config.ts`, `Cargo.toml`, `package.json`,
     the root workspace `package.json`/`pnpm-workspace.yaml`, capabilities, and
-    the settings module in `src-tauri/src/config/`
+    the settings module in `src-tauri/src/config/`, `scripts/`, `.mcp.json`, `.claude/`
   - `ci`: `.github/workflows/`
   - `tests`: `*.test.*`, `src/test/`, Rust `#[test]`
   - `docs`: `README.md`, `docs/`, this file
@@ -179,6 +185,3 @@ manager.show()?;
 platform::after_show(window)?;
 manager.focus()?;
 ```
-
-**No em dashes.** Use a period, comma, colon, or semicolon instead. 
-avoid them in code, commit messages, and docs alike.
