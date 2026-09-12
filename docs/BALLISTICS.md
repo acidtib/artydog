@@ -21,8 +21,8 @@ per-map calibration to produce a solution.
 ## Solution math
 
 ```text
-dx = target.x - mortar.x
-dy = target.y - mortar.y
+dx = target.x - artillery.x
+dy = target.y - artillery.y
 
 distance = hypot(dx, dy) * 100          // meters
 azimuth  = atan2(dx, dy) in degrees
@@ -67,7 +67,7 @@ same code path: solve every arc, present whichever come back.
 
 Both weapons reproduce a reference implementation exactly:
 
-| Weapon | Mortar | Target | Distance | Azimuth | MIL |
+| Weapon | Artillery | Target | Distance | Azimuth | MIL |
 | --- | --- | --- | --- | --- | --- |
 | L81 Mortar | 50, 50 | 53, 54 | 500 m | 36.9 deg | 461 |
 | SPH-2 | 50, 50 | 65, 50 | 1500 m | 90.0 deg | 84 low / 1213 high |

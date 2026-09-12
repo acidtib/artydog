@@ -45,8 +45,8 @@ export interface Solution {
 /// Serialized camelCase on the Rust side (CalcState in src-tauri state.rs).
 export interface CalcState {
   weaponId: string;
-  mortarX: string;
-  mortarY: string;
+  artilleryX: string;
+  artilleryY: string;
   targetX: string;
   targetY: string;
 }

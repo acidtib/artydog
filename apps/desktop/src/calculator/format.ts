@@ -16,6 +16,15 @@ export function formatAzimuth(degrees: number): string {
   return `${degrees.toFixed(1)}°`;
 }
 
+const COMPASS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"] as const;
+
+/// Sectors are centred on their letter, so N runs from 337.5 through 22.5.
+export function compassPoint(degrees: number): string {
+  const sector = Math.round((((degrees % 360) + 360) % 360) / 45) % COMPASS.length;
+
+  return COMPASS[sector];
+}
+
 export function formatDelta(meters: number): string {
   const rounded = Math.round(meters);
 

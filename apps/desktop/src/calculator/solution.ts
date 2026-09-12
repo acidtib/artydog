@@ -8,10 +8,10 @@ const RANGE_EPSILON = 1e-6;
 
 export function solve(
   weapon: Weapon,
-  mortar: Coordinate,
+  artillery: Coordinate,
   target: Coordinate,
 ): Solution {
-  const distance = distanceMeters(mortar, target);
+  const distance = distanceMeters(artillery, target);
 
   // Tables overhang the usable envelope, so range comes from the weapon.
   const inRange =
@@ -32,9 +32,9 @@ export function solve(
 
   return {
     distanceMeters: distance,
-    azimuthDegrees: azimuthDegrees(mortar, target),
-    deltaXMeters: (target.x - mortar.x) * METERS_PER_UNIT,
-    deltaYMeters: (target.y - mortar.y) * METERS_PER_UNIT,
+    azimuthDegrees: azimuthDegrees(artillery, target),
+    deltaXMeters: (target.x - artillery.x) * METERS_PER_UNIT,
+    deltaYMeters: (target.y - artillery.y) * METERS_PER_UNIT,
     inRange,
     arcs,
   };

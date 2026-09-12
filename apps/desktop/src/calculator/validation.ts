@@ -22,7 +22,7 @@ export function parseCoordinate(text: string): ParsedCoordinate {
 
   // Number() accepts "0x10" and "1e5", so the shape is checked first.
   if (!/^[+-]?(\d+\.?\d*|\.\d+)$/.test(trimmed)) {
-    return { ok: false, error: "Must be a number" };
+    return { ok: false, error: "Not a number" };
   }
 
   return { ok: true, value: Number(trimmed) };

@@ -18,8 +18,8 @@ vi.mock("@tauri-apps/api/event", () => ({
 
 const SAMPLE = {
   weaponId: "mortar",
-  mortarX: "50",
-  mortarY: "50",
+  artilleryX: "50",
+  artilleryY: "50",
   targetX: "53",
   targetY: "54",
 };

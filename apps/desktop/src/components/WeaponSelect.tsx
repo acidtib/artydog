@@ -12,26 +12,34 @@ export default function WeaponSelect({
 }: WeaponSelectProps) {
   return (
     <div>
-      <label
-        htmlFor="weapon"
-        className="block text-sm font-semibold text-neutral-200"
+      <div
+        role="radiogroup"
+        aria-label="Weapon"
+        className="flex gap-0.5 rounded-[4px] bg-tool-control p-0.5"
       >
-        Weapon
-      </label>
-      <select
-        id="weapon"
-        value={weapon.id}
-        onChange={(event) => onWeaponChange(event.target.value)}
-        className="mt-2 w-full rounded border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm outline-none focus:border-emerald-500"
-      >
-        {WEAPONS.map((candidate) => (
-          <option key={candidate.id} value={candidate.id}>
-            {candidate.label}
-          </option>
-        ))}
-      </select>
-      <p className="mt-1 text-xs text-neutral-500">
-        Range {weapon.range.minM}-{weapon.range.maxM} m
+        {WEAPONS.map((candidate) => {
+          const isActive = candidate.id === weapon.id;
+
+          return (
+            <button
+              key={candidate.id}
+              type="button"
+              role="radio"
+              aria-checked={isActive}
+              onClick={() => onWeaponChange(candidate.id)}
+              className={`min-w-0 flex-1 truncate rounded-[3px] px-2 py-1 text-xs font-medium transition-colors ${
+                isActive
+                  ? "bg-emerald-500/10 text-emerald-400"
+                  : "text-neutral-400 hover:bg-white/[0.04] hover:text-neutral-200"
+              }`}
+            >
+              {candidate.label}
+            </button>
+          );
+        })}
+      </div>
+      <p className="mt-1.5 px-0.5 font-mono text-[11px] leading-none text-neutral-500">
+        RNG {weapon.range.minM}-{weapon.range.maxM} m
       </p>
     </div>
   );

@@ -1,23 +1,22 @@
-import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
-import { fireEvent } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import App from "./App";
-
-// Rust emits OVERLAY_VISIBILITY_EVENT ("overlay-visibility") with an
-// OverlayStatus payload.
-const OVERLAY_VISIBILITY_EVENT = "overlay-visibility";
 
 // Must match CalcState in src-tauri/src/state.rs (serde camelCase).
 const EMPTY_CALC = {
   weaponId: "",
-  mortarX: "",
-  mortarY: "",
+  artilleryX: "",
+  artilleryY: "",
   targetX: "",
   targetY: "",
 };
 
 const invokeMock = vi.fn();
 const listenMock = vi.fn();
+const checkMock = vi.fn();
+const getVersionMock = vi.fn();
+const hideMock = vi.fn();
+const closeMock = vi.fn();
 
 vi.mock("@tauri-apps/api/core", () => ({
   invoke: (...args: unknown[]) => invokeMock(...args),
@@ -27,16 +26,37 @@ vi.mock("@tauri-apps/api/event", () => ({
   listen: (...args: unknown[]) => listenMock(...args),
 }));
 
-// App mounts UpdateBanner, which has no update to show in these tests.
+vi.mock("@tauri-apps/api/app", () => ({
+  getVersion: () => getVersionMock(),
+}));
+
 vi.mock("@tauri-apps/plugin-updater", () => ({
-  check: () => Promise.resolve(null),
+  check: () => checkMock(),
 }));
 
 vi.mock("@tauri-apps/plugin-process", () => ({
   relaunch: () => Promise.resolve(),
 }));
 
-function mockBackend() {
+vi.mock("@tauri-apps/api/window", () => ({
+  getCurrentWindow: () => ({
+    hide: () => hideMock(),
+    close: () => closeMock(),
+  }),
+}));
+
+beforeEach(() => {
+  invokeMock.mockReset();
+  listenMock.mockReset();
+  checkMock.mockReset();
+  getVersionMock.mockReset();
+  hideMock.mockReset();
+  closeMock.mockReset();
+  hideMock.mockResolvedValue(undefined);
+  closeMock.mockResolvedValue(undefined);
+  listenMock.mockResolvedValue(() => {});
+  getVersionMock.mockResolvedValue("0.1.3");
+  checkMock.mockResolvedValue(null);
   invokeMock.mockImplementation((command: string) => {
     switch (command) {
       case "get_calc_state":
@@ -48,181 +68,183 @@ function mockBackend() {
       case "set_hotkey":
         return Promise.resolve({ shortcut: "Alt+KeyM", registered: true, error: null });
       case "reset_overlay_geometry":
-        return Promise.resolve({ x: 760, y: 390, width: 400, height: 300 });
+        return Promise.resolve({ x: 0, y: 0, width: 400, height: 520 });
       default:
         return Promise.reject(new Error(`unexpected command: ${command}`));
     }
   });
-  listenMock.mockResolvedValue(() => {});
-}
-
-/// The handler the app registered for visibility events.
-function visibilityHandler(): (event: { payload: { visible: boolean } }) => void {
-  const call = listenMock.mock.calls.find(([event]) => event === OVERLAY_VISIBILITY_EVENT);
-  if (call === undefined) {
-    throw new Error("overlay-visibility listener was not registered");
-  }
-  return call[1];
-}
-
-async function renderSettled() {
-  render(<App />);
-  await screen.findByText(/Overlay status: Hidden/);
-}
-
-beforeEach(() => {
-  invokeMock.mockReset();
-  listenMock.mockReset();
-  mockBackend();
 });
 
 afterEach(() => {
   cleanup();
 });
 
-it("fetches the initial status once and registers the event listener", async () => {
-  await renderSettled();
-  expect(screen.getByText(/Alt \+ M/)).toBeInTheDocument();
+it("shows the calculator by default, without settings content", async () => {
+  render(<App />);
 
-  const commands = invokeMock.mock.calls.map((call) => call[0]);
-  // App's own calc effect runs after its children's effects.
-  expect(commands).toEqual(["get_overlay_state", "get_hotkey_status", "get_calc_state"]);
-  expect(listenMock).toHaveBeenCalledWith(
-    OVERLAY_VISIBILITY_EVENT,
-    expect.any(Function),
-  );
+  await waitFor(() => {
+    expect(invokeMock).toHaveBeenCalledWith("get_calc_state");
+  });
+  expect(screen.getByRole("radiogroup", { name: "Weapon" })).toBeInTheDocument();
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 });
 
-it("updates the status when Rust emits a visibility event", async () => {
-  await renderSettled();
-  expect(screen.getByText(/Overlay status: Hidden/)).toBeInTheDocument();
+it("shows the app version in the footer", async () => {
+  render(<App />);
 
-  await act(async () => {
-    visibilityHandler()({ payload: { visible: true } });
-  });
-
-  expect(screen.getByText(/Overlay status: Visible/)).toBeInTheDocument();
+  expect(await screen.findByText("v0.1.3")).toBeInTheDocument();
 });
 
-it("ignores the initial fetch result when an event arrived first", async () => {
-  let resolveFetch: (value: { visible: boolean }) => void = () => {};
-  invokeMock.mockImplementation((command: string) => {
-    if (command === "get_calc_state") {
-      return Promise.resolve(EMPTY_CALC);
-    }
-    if (command === "get_overlay_state") {
-      return new Promise((resolve) => {
-        resolveFetch = resolve;
-      });
-    }
-    if (command === "get_hotkey_status") {
-      return Promise.resolve({ shortcut: "M", registered: true, error: null });
-    }
-    return Promise.reject(new Error(`unexpected command: ${command}`));
+it("the cog opens the settings dialog and closes it again", async () => {
+  render(<App />);
+  const cog = screen.getByRole("button", { name: "Settings" });
+
+  fireEvent.click(cog);
+  expect(await screen.findByRole("dialog", { name: "Settings" })).toBeInTheDocument();
+  await screen.findByText("Overlay status");
+
+  fireEvent.click(cog);
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  expect(screen.getByRole("radiogroup", { name: "Weapon" })).toBeInTheDocument();
+});
+
+it("escape closes the settings dialog", async () => {
+  render(<App />);
+
+  fireEvent.click(screen.getByRole("button", { name: "Settings" }));
+  await screen.findByRole("dialog");
+
+  fireEvent.keyDown(window, { key: "Escape", code: "Escape" });
+
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+});
+
+it("opening settings fetches overlay state", async () => {
+  render(<App />);
+
+  fireEvent.click(screen.getByRole("button", { name: "Settings" }));
+  await screen.findByText("Overlay status");
+
+  await waitFor(() => {
+    expect(invokeMock).toHaveBeenCalledWith("get_overlay_state");
   });
-  listenMock.mockResolvedValue(() => {});
+});
+
+it("checks for updates once per launch, not once per dialog open", async () => {
+  render(<App />);
+  await waitFor(() => {
+    expect(checkMock).toHaveBeenCalledTimes(1);
+  });
+  const cog = screen.getByRole("button", { name: "Settings" });
+
+  fireEvent.click(cog);
+  await screen.findByText("Overlay status");
+  fireEvent.click(cog);
+  fireEvent.click(cog);
+  await screen.findByText("Overlay status");
+
+  expect(checkMock).toHaveBeenCalledTimes(1);
+});
+
+it("marks the cog when an update is waiting", async () => {
+  checkMock.mockResolvedValue({ version: "0.2.0", downloadAndInstall: vi.fn() });
 
   render(<App />);
 
-  // An event lands while the initial fetch is still in flight; the fetched
-  // value is stale and must not overwrite the event.
-  await waitFor(() => expect(listenMock).toHaveBeenCalled());
-  await act(async () => {
-    visibilityHandler()({ payload: { visible: true } });
-    resolveFetch({ visible: false });
-  });
-
-  expect(screen.getByText(/Overlay status: Visible/)).toBeInTheDocument();
+  expect(await screen.findByLabelText("Update available")).toBeInTheDocument();
 });
 
-it("does not poll the backend after the initial load", async () => {  await renderSettled();
-  const callsAfterLoad = invokeMock.mock.calls.length;
-
-  await new Promise((resolve) => setTimeout(resolve, 1100));
-
-  expect(invokeMock.mock.calls.length).toBe(callsAfterLoad);
-
-  // Status changes still arrive, via the event instead of polling.
-  await act(async () => {
-    visibilityHandler()({ payload: { visible: true } });
-  });
-  expect(screen.getByText(/Overlay status: Visible/)).toBeInTheDocument();
-  expect(invokeMock.mock.calls.length).toBe(callsAfterLoad);
-});
-
-it("shows an error when the initial fetch fails", async () => {
-  // The calc fetch must succeed, else /backend down/ matches two alerts.
-  invokeMock.mockImplementation((command: string) =>
-    command === "get_calc_state"
-      ? Promise.resolve(EMPTY_CALC)
-      : Promise.reject(new Error("backend down")),
-  );
-  listenMock.mockResolvedValue(() => {});
-
-  render(<App />);
-
-  await screen.findByText(/backend down/);
-  expect(screen.getByText(/Overlay status: …/)).toBeInTheDocument();
-});
-
-it("toggle button invokes toggle_overlay and reflects the new status", async () => {
+it("keeps the calc bridge alert visible while settings is open", async () => {
   invokeMock.mockImplementation((command: string) => {
-    if (command === "toggle_overlay") {
-      return Promise.resolve({ visible: true });
-    }
     if (command === "get_calc_state") {
-      return Promise.resolve(EMPTY_CALC);
+      return Promise.reject(new Error("calc backend down"));
     }
     if (command === "get_overlay_state") {
       return Promise.resolve({ visible: false });
     }
     if (command === "get_hotkey_status") {
-      return Promise.resolve({ shortcut: "M", registered: true, error: null });
+      return Promise.resolve({ shortcut: "Alt+KeyM", registered: true, error: null });
     }
     return Promise.reject(new Error(`unexpected command: ${command}`));
   });
 
-  await renderSettled();
+  render(<App />);
+  await screen.findByRole("alert");
 
-  fireEvent.click(screen.getByRole("button", { name: "Toggle Overlay" }));
+  fireEvent.click(screen.getByRole("button", { name: "Settings" }));
+  await screen.findByText("Overlay status");
 
-  await screen.findByText(/Overlay status: Visible/);
+  expect(screen.getByRole("alert")).toHaveTextContent(/calc backend down/);
+});
+
+it("surfaces a failed calc bridge as an alert", async () => {
+  invokeMock.mockImplementation((command: string) =>
+    command === "get_calc_state"
+      ? Promise.reject(new Error("calc backend down"))
+      : Promise.reject(new Error(`unexpected command: ${command}`)),
+  );
+  listenMock.mockResolvedValue(() => {});
+
+  render(<App />);
+
+  expect(await screen.findByRole("alert")).toHaveTextContent(/calc backend down/);
+});
+
+it("reports a window failure that happens while a calc error stands", async () => {
+  invokeMock.mockImplementation((command: string) =>
+    command === "get_calc_state"
+      ? Promise.reject(new Error("calc backend down"))
+      : Promise.reject(new Error(`unexpected command: ${command}`)),
+  );
+  closeMock.mockRejectedValue(new Error("no window"));
+
+  render(<App />);
+  await screen.findByRole("alert");
+
+  fireEvent.click(screen.getByRole("button", { name: "Close" }));
+
   await waitFor(() => {
-    expect(invokeMock.mock.calls.some((call) => call[0] === "toggle_overlay")).toBe(true);
+    expect(screen.getAllByRole("alert")).toHaveLength(2);
+  });
+  const texts = screen.getAllByRole("alert").map((el) => el.textContent);
+  expect(texts.some((text) => text?.includes("calc backend down"))).toBe(true);
+  expect(texts.some((text) => text?.includes("no window"))).toBe(true);
+});
+
+it("a toast can be dismissed by clicking it", async () => {
+  closeMock.mockRejectedValue(new Error("no window"));
+
+  render(<App />);
+  fireEvent.click(screen.getByRole("button", { name: "Close" }));
+
+  const toast = await screen.findByRole("alert");
+  fireEvent.click(toast);
+
+  await waitFor(() => {
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 });
 
-it("reset position invokes reset_overlay_geometry", async () => {
-  await renderSettled();
+it("the header controls tray the window and close it", async () => {
+  render(<App />);
 
-  fireEvent.click(screen.getByRole("button", { name: "Reset Position" }));
-
+  // Minimize means "go to the tray", so it hides rather than iconifying.
+  fireEvent.click(screen.getByRole("button", { name: "Minimize" }));
   await waitFor(() => {
-    expect(invokeMock).toHaveBeenCalledWith("reset_overlay_geometry");
+    expect(hideMock).toHaveBeenCalled();
+  });
+
+  fireEvent.click(screen.getByRole("button", { name: "Close" }));
+  await waitFor(() => {
+    expect(closeMock).toHaveBeenCalled();
   });
 });
 
-it("capturing a key combination rebinds the shortcut", async () => {
-  await renderSettled();
+it("reports a window control failure instead of swallowing it", async () => {
+  closeMock.mockRejectedValue(new Error("no window"));
 
-  fireEvent.click(screen.getByRole("button", { name: "Change shortcut" }));
-  const capturing = screen.getByRole("button", { name: /Press a key combination/ });
-  fireEvent.keyDown(capturing, { code: "F9" });
+  render(<App />);
+  fireEvent.click(screen.getByRole("button", { name: "Close" }));
 
-  await waitFor(() => {
-    expect(invokeMock).toHaveBeenCalledWith("set_hotkey", { shortcut: "F9" });
-  });
-});
-
-it("escape cancels capturing without rebinding", async () => {
-  await renderSettled();
-
-  fireEvent.click(screen.getByRole("button", { name: "Change shortcut" }));
-  fireEvent.keyDown(screen.getByRole("button", { name: /Press a key combination/ }), {
-    key: "Escape",
-    code: "Escape",
-  });
-
-  expect(screen.getByRole("button", { name: "Change shortcut" })).toBeInTheDocument();
-  expect(invokeMock).not.toHaveBeenCalledWith("set_hotkey", expect.anything());
+  expect(await screen.findByRole("alert")).toHaveTextContent(/no window/);
 });

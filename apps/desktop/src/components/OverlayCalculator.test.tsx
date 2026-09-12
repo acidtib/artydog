@@ -11,8 +11,8 @@ afterEach(() => {
 const SOLVED: CalcState = {
   ...emptyCalcState(),
   weaponId: "mortar",
-  mortarX: "50",
-  mortarY: "50",
+  artilleryX: "50",
+  artilleryY: "50",
   targetX: "53",
   targetY: "54",
 };
@@ -26,11 +26,12 @@ function rowValue(label: string): string {
 it("renders weapon, inputs, and a solved result from props", () => {
   render(<OverlayCalculator calc={SOLVED} onChange={vi.fn()} />);
 
+  expect(screen.getByRole("radio", { name: "L81 Mortar" })).toHaveAttribute(
+    "aria-checked",
+    "true",
+  );
   expect(
-    (screen.getByLabelText("Weapon") as HTMLSelectElement).value,
-  ).toBe("mortar");
-  expect(
-    (within(screen.getByRole("group", { name: "Mortar" })).getByLabelText("x") as HTMLInputElement).value,
+    (within(screen.getByRole("group", { name: "Artillery" })).getByLabelText("x") as HTMLInputElement).value,
   ).toBe("50");
   expect(rowValue("Distance")).toBe("500 m");
 });
@@ -51,9 +52,7 @@ it("propagates weapon changes as full CalcState writes", () => {
   const onChange = vi.fn();
   render(<OverlayCalculator calc={SOLVED} onChange={onChange} />);
 
-  fireEvent.change(screen.getByLabelText("Weapon"), {
-    target: { value: "sph2" },
-  });
+  fireEvent.click(screen.getByRole("radio", { name: "SPH-2" }));
 
   expect(onChange).toHaveBeenCalledWith({ ...SOLVED, weaponId: "sph2" });
 });

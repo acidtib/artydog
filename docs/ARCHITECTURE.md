@@ -41,29 +41,39 @@ Suggested structure:
 ```text
 src/
 ├── components/
-│   ├── Calculator.tsx
-│   ├── CoordinateInput.tsx
-│   ├── ResultPanel.tsx
-│   ├── OverlayControls.tsx
-│   └── Settings.tsx
+│   ├── Calculator.tsx          # main-window calculator surface
+│   ├── OverlayCalculator.tsx   # same surface, overlay window
+│   ├── CoordinateInput.tsx     # numbers-only coordinate pair
+│   ├── ResultPanel.tsx         # status strip and solution readout
+│   ├── ToastStack.tsx          # transient failure notices
+│   ├── WeaponSelect.tsx
+│   └── SettingsView.tsx        # overlay, shortcut, and update settings
 │
-├── calculator/
-│   ├── types.ts
-│   ├── distance.ts
-│   ├── bearing.ts
-│   ├── elevation.ts
-│   └── solution.ts
+├── calculator/                 # pure ballistics math and data, no React
 │
-├── state/
-│   └── calculatorStore.ts
+├── lib/                        # Tauri bridge, hooks, window helpers
 │
-├── App.tsx
-└── main.tsx
+├── App.tsx                     # main window shell (header, calculator, settings)
+├── Overlay.tsx                 # overlay window shell (drag bar, hide)
+├── main.tsx
+└── overlay-main.tsx
 ```
 
 Keep calculator math independent from React.
 
-The math should be testable without a browser or Tauri.
+The main window is a compact undecorated tool (382x476, fixed) with its own
+header: the ArtyDog mark plus minimize and close, both of which go to the
+tray. A footer carries the settings cog on the left and the app version on
+the right; the cog toggles a settings dialog that owns the overlay controls,
+the global shortcut, and app updates. Design tokens live in `styles.css` as a
+Tailwind v4 `@theme` block (`tool-*` colors); components use those utilities
+and avoid ad hoc hex values.
+
+The window is pinned to a fixed size with `minWidth`/`maxWidth` and
+`minHeight`/`maxHeight` rather than `resizable: false`. GTK sizes a
+non-resizable window from its natural size request and discards the
+configured width and height, so `resizable` stays `true` and the equal
+min/max bounds are what actually hold the size.
 
 ## 3. Rust backend
 
@@ -139,7 +149,9 @@ The overlay window should normally be:
 - undecorated
 - always-on-top while active
 - positioned using saved coordinates
-- resizable only when the user is configuring it
+- pinned to one size (382x443, the same equal min/max trick as the main
+  window), mirrored by `OVERLAY_DEFAULT_*` in `state.rs` so reset centers on
+  the size the window actually holds
 - interactive while visible
 - excluded from the taskbar where appropriate
 
@@ -181,7 +193,7 @@ Application idle
 
 Both windows edit one calculator state owned by Rust. `CalcState`
 (`src-tauri/src/state.rs`) holds the raw input strings: `weaponId`,
-`mortarX`, `mortarY`, `targetX`, `targetY`. Writes go through the
+`artilleryX`, `artilleryY`, `targetX`, `targetY`. Writes go through the
 `set_calc_state` command, which stores the state and broadcasts
 `calc-state-changed` to every window. Reads go through `get_calc_state`
 on mount. `src/lib/useCalcState.ts` mirrors the state per window:
@@ -292,7 +304,7 @@ Coordinates are game-world grid units; one unit is 100 m on every map.
 `solve()` (`src/calculator/solution.ts`) composes the pipeline:
 
 ```text
-mortar + target grid coordinates
+artillery + target grid coordinates
         ↓
 distanceMeters + azimuthDegrees
         ↓
@@ -367,7 +379,7 @@ Interactive map mode
 Future flow:
 
 ```text
-Click mortar on map
+Click artillery on map
         ↓
 Game coordinates
 
@@ -376,7 +388,7 @@ Click target on map
 Game coordinates
 
         ↓
-Mortar calculator
+Artillery calculator
         ↓
 Bearing / distance / elevation
 ```

@@ -1,12 +1,14 @@
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
+use std::time::Instant;
 
 pub const OVERLAY_LABEL: &str = "overlay";
 pub const MAIN_LABEL: &str = "main";
-pub const OVERLAY_DEFAULT_WIDTH: u32 = 400;
-pub const OVERLAY_DEFAULT_HEIGHT: u32 = 520;
-pub const OVERLAY_MIN_WIDTH: u32 = 280;
-pub const OVERLAY_MIN_HEIGHT: u32 = 200;
+/// Mirrors the pinned `overlay` window in `tauri.conf.json`; a test fails if they drift.
+pub const OVERLAY_DEFAULT_WIDTH: u32 = 382;
+pub const OVERLAY_DEFAULT_HEIGHT: u32 = 443;
+pub const OVERLAY_MIN_WIDTH: u32 = OVERLAY_DEFAULT_WIDTH;
+pub const OVERLAY_MIN_HEIGHT: u32 = OVERLAY_DEFAULT_HEIGHT;
 
 /// WARDOGS binds bare `M` to its map, and a registered shortcut is exclusive:
 /// the game would never see the key again. The modifier keeps them apart.
@@ -134,8 +136,8 @@ pub struct HotkeyStatus {
 #[serde(rename_all = "camelCase")]
 pub struct CalcState {
     pub weapon_id: String,
-    pub mortar_x: String,
-    pub mortar_y: String,
+    pub artillery_x: String,
+    pub artillery_y: String,
     pub target_x: String,
     pub target_y: String,
 }
@@ -144,8 +146,8 @@ impl Default for CalcState {
     fn default() -> Self {
         Self {
             weapon_id: String::new(),
-            mortar_x: String::new(),
-            mortar_y: String::new(),
+            artillery_x: String::new(),
+            artillery_y: String::new(),
             target_x: String::new(),
             target_y: String::new(),
         }
@@ -158,6 +160,9 @@ pub struct AppState {
     pub hotkey: Mutex<String>,
     pub hotkey_error: Mutex<Option<String>>,
     pub calc: Mutex<CalcState>,
+    /// When the tray icon was last left-clicked. Only Windows reports a
+    /// double click of its own, so the pair is recognised from this.
+    pub last_tray_click: Mutex<Option<Instant>>,
 }
 
 impl AppState {
@@ -167,6 +172,7 @@ impl AppState {
             hotkey: Mutex::new(DEFAULT_HOTKEY.to_string()),
             hotkey_error: Mutex::new(None),
             calc: Mutex::new(CalcState::default()),
+            last_tray_click: Mutex::new(None),
         }
     }
 }
@@ -180,6 +186,26 @@ impl Default for AppState {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Reset centers with these constants, so a mismatch persists a size the window cannot hold.
+    #[test]
+    fn overlay_size_matches_the_window_config() {
+        let config: serde_json::Value =
+            serde_json::from_str(include_str!("../tauri.conf.json"))
+                .expect("tauri.conf.json parses");
+        let overlay = config["app"]["windows"]
+            .as_array()
+            .expect("windows array")
+            .iter()
+            .find(|window| window["label"] == OVERLAY_LABEL)
+            .expect("overlay window is configured")
+            .clone();
+
+        assert_eq!(overlay["width"], OVERLAY_DEFAULT_WIDTH);
+        assert_eq!(overlay["height"], OVERLAY_DEFAULT_HEIGHT);
+        assert_eq!(overlay["minWidth"], OVERLAY_MIN_WIDTH);
+        assert_eq!(overlay["minHeight"], OVERLAY_MIN_HEIGHT);
+    }
 
     const PRIMARY: MonitorRect = MonitorRect {
         x: 0,
@@ -200,9 +226,17 @@ mod tests {
         OverlayGeometry {
             x,
             y,
-            width: 400,
-            height: 300,
+            width: OVERLAY_DEFAULT_WIDTH,
+            height: OVERLAY_DEFAULT_HEIGHT,
         }
+    }
+
+    /// Where `geometry()` lands once recentered on the primary monitor.
+    fn centered_on_primary() -> OverlayGeometry {
+        geometry(
+            (PRIMARY.width as i32 - OVERLAY_DEFAULT_WIDTH as i32) / 2,
+            (PRIMARY.height as i32 - OVERLAY_DEFAULT_HEIGHT as i32) / 2,
+        )
     }
 
     #[test]
@@ -260,14 +294,14 @@ mod tests {
     fn clamp_recenters_when_the_saved_monitor_is_gone() {
         let saved = geometry(-900, 100);
         let recovered = saved.clamped_to(&[PRIMARY]);
-        assert_eq!(recovered, geometry(760, 390));
+        assert_eq!(recovered, centered_on_primary());
     }
 
     #[test]
     fn clamp_recenters_geometry_hanging_off_the_edge() {
         // Only 20px wide sliver left on screen, below MIN_VISIBLE.
         let saved = geometry(1900, 400);
-        assert_eq!(saved.clamped_to(&[PRIMARY]), geometry(760, 390));
+        assert_eq!(saved.clamped_to(&[PRIMARY]), centered_on_primary());
     }
 
     #[test]
@@ -314,16 +348,16 @@ mod tests {
     #[test]
     fn centered_in_uses_the_monitor_origin() {
         let centered = geometry(0, 0).centered_in(LEFT);
-        assert_eq!(centered.x, -1280 + (1280 - 400) / 2);
-        assert_eq!(centered.y, (1024 - 300) / 2);
+        assert_eq!(centered.x, -1280 + (1280 - OVERLAY_DEFAULT_WIDTH as i32) / 2);
+        assert_eq!(centered.y, (1024 - OVERLAY_DEFAULT_HEIGHT as i32) / 2);
     }
 
     #[test]
     fn calc_state_default_is_all_empty() {
         let calc = CalcState::default();
         assert_eq!(calc.weapon_id, "");
-        assert_eq!(calc.mortar_x, "");
-        assert_eq!(calc.mortar_y, "");
+        assert_eq!(calc.artillery_x, "");
+        assert_eq!(calc.artillery_y, "");
         assert_eq!(calc.target_x, "");
         assert_eq!(calc.target_y, "");
     }
@@ -332,8 +366,8 @@ mod tests {
     fn calc_state_serializes_camel_case_for_the_frontend_contract() {
         let calc = CalcState {
             weapon_id: "mortar".to_string(),
-            mortar_x: "50".to_string(),
-            mortar_y: "50".to_string(),
+            artillery_x: "50".to_string(),
+            artillery_y: "50".to_string(),
             target_x: "53".to_string(),
             target_y: "54".to_string(),
         };
@@ -341,7 +375,7 @@ mod tests {
         let json = serde_json::to_string(&calc).unwrap();
         assert_eq!(
             json,
-            r#"{"weaponId":"mortar","mortarX":"50","mortarY":"50","targetX":"53","targetY":"54"}"#
+            r#"{"weaponId":"mortar","artilleryX":"50","artilleryY":"50","targetX":"53","targetY":"54"}"#
         );
 
         let back: CalcState = serde_json::from_str(&json).unwrap();

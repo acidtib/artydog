@@ -18,7 +18,7 @@ it("rejects values Number() would silently accept", () => {
   for (const input of ["abc", "0x10", "1e5", "1,5", "--1", "1.2.3"]) {
     expect(parseCoordinate(input), input).toEqual({
       ok: false,
-      error: "Must be a number",
+      error: "Not a number",
     });
   }
 });
@@ -34,6 +34,6 @@ it("reports errors per axis", () => {
   });
   expect(parsePoint("abc", "")).toEqual({
     ok: false,
-    errors: { x: "Must be a number", y: "Required" },
+    errors: { x: "Not a number", y: "Required" },
   });
 });

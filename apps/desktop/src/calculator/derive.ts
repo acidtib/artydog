@@ -1,20 +1,35 @@
 import { solve } from "./solution";
 import type { CalcState, Solution, Weapon } from "./types";
-import { parsePoint, type PointErrors } from "./validation";
+import {
+  parseCoordinate,
+  parsePoint,
+  type ParsedPoint,
+  type PointErrors,
+} from "./validation";
 import { DEFAULT_WEAPON_ID, WEAPONS, findWeapon } from "./weapons";
+
+/// What the result strip reports. Out of range carries the shortfall because
+/// "too far by 316 m" tells the user where to move; "out of range" does not.
+export type CalcStatus =
+  | { kind: "awaiting"; missing: "artillery" | "target" | "both" }
+  | { kind: "invalid" }
+  | { kind: "inRange" }
+  | { kind: "tooClose"; byMeters: number }
+  | { kind: "tooFar"; byMeters: number };
 
 export interface CalcView {
   weapon: Weapon;
-  mortarErrors: PointErrors;
+  artilleryErrors: PointErrors;
   targetErrors: PointErrors;
   solution: Solution | null;
+  status: CalcStatus;
 }
 
 export function emptyCalcState(): CalcState {
   return {
     weaponId: "",
-    mortarX: "",
-    mortarY: "",
+    artilleryX: "",
+    artilleryY: "",
     targetX: "",
     targetY: "",
   };
@@ -33,25 +48,72 @@ function visibleErrors(
   };
 }
 
+/// A blank field is still to come, not a mistake. Only text the user actually
+/// typed can make a point invalid.
+function pointProgress(
+  parsed: ParsedPoint,
+  x: string,
+  y: string,
+): "ok" | "pending" | "invalid" {
+  if (parsed.ok) {
+    return "ok";
+  }
+  const mistyped = [x, y].some(
+    (text) => text.trim() !== "" && !parseCoordinate(text).ok,
+  );
+
+  return mistyped ? "invalid" : "pending";
+}
+
+function calcStatus(
+  weapon: Weapon,
+  calc: CalcState,
+  artillery: ParsedPoint,
+  target: ParsedPoint,
+  solution: Solution | null,
+): CalcStatus {
+  if (solution === null) {
+    const gun = pointProgress(artillery, calc.artilleryX, calc.artilleryY);
+    const shot = pointProgress(target, calc.targetX, calc.targetY);
+
+    if (gun === "invalid" || shot === "invalid") {
+      return { kind: "invalid" };
+    }
+    if (gun !== "ok" && shot !== "ok") {
+      return { kind: "awaiting", missing: "both" };
+    }
+    return { kind: "awaiting", missing: gun === "ok" ? "target" : "artillery" };
+  }
+
+  if (solution.inRange) {
+    return { kind: "inRange" };
+  }
+
+  return solution.distanceMeters < weapon.range.minM
+    ? { kind: "tooClose", byMeters: weapon.range.minM - solution.distanceMeters }
+    : { kind: "tooFar", byMeters: solution.distanceMeters - weapon.range.maxM };
+}
+
 export function deriveCalcView(calc: CalcState): CalcView {
   const weapon =
     findWeapon(calc.weaponId) ??
     findWeapon(DEFAULT_WEAPON_ID) ??
     WEAPONS[0];
 
-  const mortar = parsePoint(calc.mortarX, calc.mortarY);
+  const artillery = parsePoint(calc.artilleryX, calc.artilleryY);
   const target = parsePoint(calc.targetX, calc.targetY);
 
   const solution =
-    mortar.ok && target.ok
-      ? solve(weapon, mortar.value, target.value)
+    artillery.ok && target.ok
+      ? solve(weapon, artillery.value, target.value)
       : null;
 
   return {
     weapon,
-    mortarErrors: mortar.ok
+    status: calcStatus(weapon, calc, artillery, target, solution),
+    artilleryErrors: artillery.ok
       ? {}
-      : visibleErrors(mortar.errors, calc.mortarX, calc.mortarY),
+      : visibleErrors(artillery.errors, calc.artilleryX, calc.artilleryY),
     targetErrors: target.ok
       ? {}
       : visibleErrors(target.errors, calc.targetX, calc.targetY),
@@ -61,14 +123,14 @@ export function deriveCalcView(calc: CalcState): CalcView {
 
 export function editCalcPoint(
   calc: CalcState,
-  point: "mortar" | "target",
+  point: "artillery" | "target",
   axis: "x" | "y",
   value: string,
 ): CalcState {
-  if (point === "mortar") {
+  if (point === "artillery") {
     return axis === "x"
-      ? { ...calc, mortarX: value }
-      : { ...calc, mortarY: value };
+      ? { ...calc, artilleryX: value }
+      : { ...calc, artilleryY: value };
   }
   return axis === "x"
     ? { ...calc, targetX: value }

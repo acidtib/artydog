@@ -53,16 +53,16 @@ it("replaces local state when the other window writes", async () => {
   await waitFor(() => expect(getCalcStateMock).toHaveBeenCalled());
 
   await act(async () => {
-    listener(state({ mortarX: "50" }));
+    listener(state({ artilleryX: "50" }));
   });
 
-  expect(result.current.calc.mortarX).toBe("50");
+  expect(result.current.calc.artilleryX).toBe("50");
 });
 
 it("applies an edit locally before the write completes", async () => {
   getCalcStateMock.mockResolvedValue(emptyCalcState());
   setCalcStateMock.mockReturnValue(new Promise(() => {}));
-  const next = state({ mortarX: "12" });
+  const next = state({ artilleryX: "12" });
 
   const { result } = renderHook(() => useCalcState());
   await waitFor(() => expect(getCalcStateMock).toHaveBeenCalled());
@@ -82,13 +82,13 @@ it("surfaces a failed write and clears the error on the next success", async () 
 
   setCalcStateMock.mockRejectedValue(new Error("ipc down"));
   act(() => {
-    result.current.updateCalc(state({ mortarX: "12" }));
+    result.current.updateCalc(state({ artilleryX: "12" }));
   });
   await waitFor(() => expect(result.current.error).not.toBeNull());
 
-  setCalcStateMock.mockResolvedValue(state({ mortarX: "14" }));
+  setCalcStateMock.mockResolvedValue(state({ artilleryX: "14" }));
   act(() => {
-    result.current.updateCalc(state({ mortarX: "14" }));
+    result.current.updateCalc(state({ artilleryX: "14" }));
   });
   await waitFor(() => expect(result.current.error).toBeNull());
 });

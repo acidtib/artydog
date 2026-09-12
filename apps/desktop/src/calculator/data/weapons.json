@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "metersPerUnit": 100,
-  "defaultWeapon": "mortar",
+  "defaultWeapon": "sph2",
   "weapons": [
     {
       "id": "mortar",

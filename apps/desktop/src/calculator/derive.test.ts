@@ -15,7 +15,7 @@ it("treats a fresh state as neutral: default weapon, no errors, no solution", ()
   const view = deriveCalcView(emptyCalcState());
 
   expect(view.weapon.id).toBe(DEFAULT_WEAPON_ID);
-  expect(view.mortarErrors).toEqual({});
+  expect(view.artilleryErrors).toEqual({});
   expect(view.targetErrors).toEqual({});
   expect(view.solution).toBeNull();
 });
@@ -28,17 +28,23 @@ it("falls back to the default weapon for an unknown id", () => {
 
 it("errors only on non-empty invalid fields, never on empty ones", () => {
   const view = deriveCalcView(
-    calc({ mortarX: "abc", targetX: "53", targetY: "54" }),
+    calc({ artilleryX: "abc", targetX: "53", targetY: "54" }),
   );
 
-  expect(view.mortarErrors).toEqual({ x: "Must be a number" });
+  expect(view.artilleryErrors).toEqual({ x: "Not a number" });
   expect(view.targetErrors).toEqual({});
   expect(view.solution).toBeNull();
 });
 
 it("solves the reference vector when both points parse", () => {
   const view = deriveCalcView(
-    calc({ mortarX: "50", mortarY: "50", targetX: "53", targetY: "54" }),
+    calc({
+      weaponId: "mortar",
+      artilleryX: "50",
+      artilleryY: "50",
+      targetX: "53",
+      targetY: "54",
+    }),
   );
 
   expect(view.solution).not.toBeNull();
@@ -49,7 +55,13 @@ it("solves the reference vector when both points parse", () => {
 
 it("keeps a solution that is out of range, flagged with empty arcs", () => {
   const view = deriveCalcView(
-    calc({ mortarX: "50", mortarY: "50", targetX: "50", targetY: "60" }),
+    calc({
+      weaponId: "mortar",
+      artilleryX: "50",
+      artilleryY: "50",
+      targetX: "50",
+      targetY: "60",
+    }),
   );
 
   expect(view.solution!.distanceMeters).toBe(1000);
@@ -57,12 +69,33 @@ it("keeps a solution that is out of range, flagged with empty arcs", () => {
   expect(view.solution!.arcs).toHaveLength(0);
 });
 
+/// The fields refuse text that cannot become a number, so this state only
+/// arrives from elsewhere - the other window, or a future map click.
+it("reports a coordinate that does not parse as invalid, not as awaited", () => {
+  const view = deriveCalcView(
+    calc({ artilleryX: "50", artilleryY: "abc", targetX: "53", targetY: "54" }),
+  );
+
+  expect(view.status).toEqual({ kind: "invalid" });
+  expect(view.artilleryErrors).toEqual({ y: "Not a number" });
+});
+
+it("names the point still to be filled in", () => {
+  const awaitingTarget = deriveCalcView(
+    calc({ artilleryX: "50", artilleryY: "50" }),
+  );
+  expect(awaitingTarget.status).toEqual({ kind: "awaiting", missing: "target" });
+
+  const awaitingBoth = deriveCalcView(emptyCalcState());
+  expect(awaitingBoth.status).toEqual({ kind: "awaiting", missing: "both" });
+});
+
 it("uses the selected weapon's arcs", () => {
   const view = deriveCalcView(
     calc({
       weaponId: "sph2",
-      mortarX: "50",
-      mortarY: "50",
+      artilleryX: "50",
+      artilleryY: "50",
       targetX: "65",
       targetY: "50",
     }),
@@ -73,10 +106,10 @@ it("uses the selected weapon's arcs", () => {
 });
 
 it("edits one field immutably", () => {
-  const before = calc({ mortarX: "50", targetY: "54" });
+  const before = calc({ artilleryX: "50", targetY: "54" });
 
   const after = editCalcPoint(before, "target", "y", "60");
 
-  expect(after).toEqual(calc({ mortarX: "50", targetY: "60" }));
-  expect(before).toEqual(calc({ mortarX: "50", targetY: "54" }));
+  expect(after).toEqual(calc({ artilleryX: "50", targetY: "60" }));
+  expect(before).toEqual(calc({ artilleryX: "50", targetY: "54" }));
 });

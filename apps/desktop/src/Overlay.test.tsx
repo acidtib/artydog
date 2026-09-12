@@ -4,7 +4,6 @@ import Overlay from "./Overlay";
 
 const invokeMock = vi.fn();
 const listenMock = vi.fn();
-const startResizeDraggingMock = vi.fn();
 
 vi.mock("@tauri-apps/api/core", () => ({
   invoke: (...args: unknown[]) => invokeMock(...args),
@@ -14,17 +13,11 @@ vi.mock("@tauri-apps/api/event", () => ({
   listen: (...args: unknown[]) => listenMock(...args),
 }));
 
-vi.mock("@tauri-apps/api/window", () => ({
-  getCurrentWindow: () => ({
-    startResizeDragging: (...args: unknown[]) => startResizeDraggingMock(...args),
-  }),
-}));
-
 // Must match CalcState in src-tauri/src/state.rs (serde camelCase).
 const EMPTY_CALC = {
   weaponId: "",
-  mortarX: "",
-  mortarY: "",
+  artilleryX: "",
+  artilleryY: "",
   targetX: "",
   targetY: "",
 };
@@ -32,8 +25,6 @@ const EMPTY_CALC = {
 beforeEach(() => {
   invokeMock.mockReset();
   listenMock.mockReset();
-  startResizeDraggingMock.mockReset();
-  startResizeDraggingMock.mockResolvedValue(undefined);
   listenMock.mockResolvedValue(() => {});
   invokeMock.mockImplementation((command: string) => {
     if (command === "get_calc_state") {
@@ -75,14 +66,4 @@ it("the title bar is a drag region", () => {
   const dragRegion = container.querySelector("[data-tauri-drag-region]");
   expect(dragRegion).not.toBeNull();
   expect(dragRegion).toHaveTextContent("ARTYDOG");
-});
-
-it("the corner grip starts a resize", async () => {
-  render(<Overlay />);
-
-  fireEvent.mouseDown(screen.getByRole("button", { name: "Resize overlay" }));
-
-  await vi.waitFor(() => {
-    expect(startResizeDraggingMock).toHaveBeenCalledWith("SouthEast");
-  });
 });

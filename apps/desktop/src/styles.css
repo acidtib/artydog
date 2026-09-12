@@ -1,1 +1,19 @@
 @import "tailwindcss";
+
+@theme {
+  --color-tool-base: #0d0d0d;
+  --color-tool-raised: #161616;
+  --color-tool-control: #1a1a1a;
+  --color-tool-input: #141414;
+  --color-tool-border: #262626;
+  --color-tool-hairline: #1f1f1f;
+}
+
+@layer base {
+  /* Native buttons show the arrow cursor. In a chromeless window with no OS
+     chrome to read, the pointer is the main hint that something is clickable. */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+}
