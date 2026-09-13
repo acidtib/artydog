@@ -1,3 +1,5 @@
+*   Add Cloudflare Web Analytics to the website.
+
 *   Prerender the website, so search engines and link previews see its content
     without running JavaScript.
 
