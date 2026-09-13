@@ -1,3 +1,8 @@
+*   Give the app, tray and website the ArtyDog icon: a dog's head inside a
+    rangefinder reticle.
+
+    *[acidtib](https://github.com/acidtib)*
+
 *   Add contributing guidelines, a pull request template, and a check that
     every pull request adds a changelog entry.
 
