@@ -70,19 +70,19 @@ it("spells out what the app does and never does to the game", () => {
 
 it("points the download buttons at the current release assets", () => {
   render(<App />);
-  const base =
-    "https://github.com/acidtib/artydog/releases/download/app-v0.1.3";
+  const version = desktop.version;
+  const base = `https://github.com/acidtib/artydog/releases/download/app-v${version}`;
 
   expect(screen.getByRole("link", { name: "Download .exe" })).toHaveAttribute(
     "href",
-    `${base}/ArtyDog_0.1.3_x64-setup.exe`,
+    `${base}/ArtyDog_${version}_x64-setup.exe`,
   );
   expect(
     screen.getByRole("link", { name: "Download AppImage" }),
-  ).toHaveAttribute("href", `${base}/ArtyDog_0.1.3_amd64.AppImage`);
+  ).toHaveAttribute("href", `${base}/ArtyDog_${version}_amd64.AppImage`);
   expect(screen.getByRole("link", { name: "Download .deb" })).toHaveAttribute(
     "href",
-    `${base}/ArtyDog_0.1.3_amd64.deb`,
+    `${base}/ArtyDog_${version}_amd64.deb`,
   );
 });
 
