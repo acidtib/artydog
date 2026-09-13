@@ -1,3 +1,5 @@
+## ArtyDog 0.2.0 (September 13, 2026) ##
+
 *   Put the full calculator in the overlay, sharing one set of inputs with the
     main window.
 
