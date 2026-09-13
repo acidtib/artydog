@@ -57,7 +57,7 @@ src/
 
 Keep calculator math independent from React.
 
-The main window is a compact undecorated tool (382x476, fixed) with its own
+The main window is a compact undecorated tool (382x477, fixed) with its own
 header: the ArtyDog mark plus minimize and close, both of which go to the
 tray. A footer carries the settings cog on the left and the app version on
 the right; the cog toggles a settings dialog that owns the overlay controls,
@@ -65,11 +65,8 @@ the global shortcut, and app updates. Design tokens live in `styles.css` as a
 Tailwind v4 `@theme` block (`tool-*` colors); components use those utilities
 and avoid ad hoc hex values.
 
-The window is pinned to a fixed size with `minWidth`/`maxWidth` and
-`minHeight`/`maxHeight` rather than `resizable: false`. GTK sizes a
-non-resizable window from its natural size request and discards the
-configured width and height, so `resizable` stays `true` and the equal
-min/max bounds are what actually hold the size.
+Both windows are fixed-size through `resizable: false`, so `width` and
+`height` in `tauri.conf.json` are the only place their size is declared.
 
 ## 3. Rust backend
 
@@ -142,9 +139,9 @@ The overlay window is:
 - undecorated
 - always-on-top
 - positioned using saved coordinates
-- pinned to one size (382x443, the same equal min/max trick as the main
-  window), mirrored by `OVERLAY_DEFAULT_*` in `state.rs` so reset centers on
-  the size the window actually holds
+- pinned to one size (`resizable: false`, 382x444), mirrored by
+  `OVERLAY_DEFAULT_*` in `state.rs` so reset centers on the size the window
+  actually holds
 - interactive while visible
 - excluded from the taskbar
 
@@ -304,7 +301,7 @@ How inputs and solutions flow between windows is covered in section 7,
 ```json
 {
   "schemaVersion": 1,
-  "overlay": { "x": 1450, "y": 120, "width": 382, "height": 443 },
+  "overlay": { "x": 1450, "y": 120, "width": 382, "height": 444 },
   "hotkey": "Alt+M"
 }
 ```
