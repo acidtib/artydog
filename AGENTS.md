@@ -3,7 +3,7 @@
 ArtyDog is a pnpm workspace (see `pnpm-workspace.yaml`) with two apps:
 `apps/desktop`, a Tauri 2 app (React/TypeScript frontend over a Rust backend)
 that runs as a normal window or as an interactive overlay over the game
-WARDOGS, and `apps/website`, the landing site. Desktop has two frontend entry
+WARDOGS, and `apps/website`, the website, which runs the calculator in the browser. Desktop has two frontend entry
 points: the main window (`index.html` -> `src/main.tsx` -> `App.tsx`) and the
 overlay window (`overlay.html` -> `src/overlay-main.tsx` -> `Overlay.tsx`).
 Firing solutions come from `src/calculator/`, which is pure TypeScript and
@@ -67,7 +67,7 @@ reader scanning `git log` needs before anything else.
   - `state`: shared Rust state in `src-tauri/src/state.rs`
   - `platform`: OS abstraction in `src-tauri/src/platform/`
   - `lib`: shared frontend code in `src/lib/`
-  - `website`: the landing site in `apps/website/`
+  - `website`: the website in `apps/website/`
   - `style`: styling in `src/styles.css`, Tailwind setup
   - `config`: `tauri.conf.json`, `vite.config.ts`, `Cargo.toml`, `package.json`,
     the root workspace `package.json`/`pnpm-workspace.yaml`, capabilities, and

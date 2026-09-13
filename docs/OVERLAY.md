@@ -2,15 +2,15 @@
 
 ## Goal
 
-Implement an overlay that behaves like a small interactive desktop window sitting above WARDOGS.
+An overlay that behaves like a small interactive desktop window sitting above WARDOGS.
 
 It is **not** a game injection system.
 
-It should be an ordinary native desktop window controlled by the calculator application.
+It is an ordinary native desktop window controlled by the calculator application.
 
 ## Window model
 
-Create two Tauri windows:
+Two Tauri windows:
 
 ```text
 main
@@ -19,14 +19,14 @@ overlay
 
 ### Main
 
-Normal desktop application.
+Compact calculator window.
 
 Properties:
 
-- decorated
-- resizable
+- undecorated, with its own header (drag region, minimize, close)
+- fixed size, 382x476
 - taskbar visible
-- normal focus behavior
+- minimize and close hide it to the tray
 
 ### Overlay
 
@@ -35,12 +35,12 @@ Specialized presentation window.
 Properties:
 
 - hidden initially
-- undecorated
+- undecorated, with a drag bar and a hide button
 - always-on-top
+- fixed size, 382x443
 - saved position
-- saved size
 - interactive
-- no taskbar entry when appropriate
+- no taskbar entry
 - owned by the same application process
 
 Tauri's window APIs expose always-on-top, visibility, positioning, size, monitor lookup, and transparency controls.
@@ -65,17 +65,8 @@ Tauri's window APIs expose always-on-top, visibility, positioning, size, monitor
                   └──────────────┘
 ```
 
-Additional states may be tracked internally:
-
-```text
-Hidden
-Showing
-Visible
-Hiding
-Error
-```
-
-Do not overcomplicate the initial implementation.
+Native visibility is the source of truth. Do not track extra intermediate
+states unless a platform forces it.
 
 ## The toggle shortcut
 
@@ -86,66 +77,73 @@ the key to the registering application and the foreground one never sees it.
 WARDOGS binds bare `M` to its map, so claiming `M` stopped the map from
 opening at all while ArtyDog ran. The modifier keeps the two apart.
 
-The shortcut is stored in `config.json` and editable from the main window,
-which captures the next key combination pressed. Rebinding releases the old
-shortcut before claiming the new one, and a shortcut the OS refuses leaves
-the previous one in place rather than dropping the toggle entirely.
+The shortcut is stored in `config.json` and rebound from **Settings >
+Shortcut**, which captures the next key combination pressed. Rebinding
+releases the old shortcut before claiming the new one, and a shortcut the OS
+refuses leaves the previous one in place rather than dropping the toggle
+entirely.
 
 Anything bound here is taken from the game for as long as ArtyDog runs, so a
 user who rebinds onto a key WARDOGS needs will lose it in game. That is their
 choice to make; the default avoids it.
 
-## Overlay commands
+## Commands
 
-Expose a small native API:
+The frontend gets a small native API (`src-tauri/src/commands.rs`):
 
 ```text
 show_overlay()
 hide_overlay()
 toggle_overlay()
 get_overlay_state()
+get_overlay_geometry()
 set_overlay_position()
 set_overlay_size()
+reset_overlay_geometry()
+get_hotkey_status()
+set_hotkey()
+get_calc_state()
+set_calc_state()
 ```
+
+Show, hide and toggle return the requested visibility rather than re-reading
+it, because the window manager may still be mapping the window.
 
 Do not expose arbitrary window-management operations to the frontend.
 
-## Overlay events
-
-Frontend should receive:
+## Events
 
 ```text
-overlay:shown
-overlay:hidden
-overlay:position-changed
-overlay:size-changed
+overlay-visibility    every show or hide, whoever asked for it
+calc-state-changed    every calculator write, to both windows
 ```
 
-Use these to keep React state synchronized.
+The frontend treats these events as the truth and uses them to keep React
+state synchronized.
 
 ## Focus
 
 When the overlay is shown:
 
-1. Show the overlay.
-2. Restore its saved geometry.
+1. Restore its saved geometry.
+2. Show the overlay.
 3. Bring it above the game.
-4. Focus it if needed.
+4. Focus it, best effort.
 5. Allow normal mouse interaction.
 
 When hidden:
 
 1. Hide it.
-2. Do not terminate the process.
-3. Do not destroy calculator state.
+2. Save its geometry.
+3. Do not terminate the process.
+4. Do not destroy calculator state.
 
-Avoid aggressive focus stealing.
+Avoid aggressive focus stealing. A compositor that declines activation is
+logged, not treated as a failure.
 
 The exact focus behavior should be tested with WARDOGS because game focus handling can vary by window mode.
 
 ## Mouse behavior
-
-The default MVP behavior is:
 
 ```text
 ┌───────────────────────────────┐
@@ -170,41 +168,22 @@ Do not synthesize mouse events into WARDOGS.
 
 ## Transparency
 
-Do not require a transparent overlay for MVP.
+The overlay is an opaque compact panel. Transparency is deferred.
 
-Start with an opaque compact panel.
-
-Example:
-
-```text
-┌─────────────────────┐
-│ MORTAR              │
-│                     │
-│ X [1234] Y [5678]   │
-│                     │
-│ TARGET              │
-│ X [2345] Y [6789]   │
-│                     │
-│ 842m  127°  43°     │
-└─────────────────────┘
-```
-
-Transparency can be added later.
-
-This avoids making the first Windows/Linux implementation dependent on transparent-window behavior.
-
-Tauri documents transparency support, but platform behavior differs; keep it optional.
+This avoids making the Windows/Linux implementation dependent on
+transparent-window behavior. Tauri documents transparency support, but
+platform behavior differs; keep it optional if it is ever added.
 
 ## Game window modes
 
-MVP should target:
+Target:
 
 1. Borderless windowed
 2. Normal windowed
 
 Do not make exclusive fullscreen a requirement.
 
-Document that borderless/windowed mode provides the most predictable environment for companion overlays.
+Borderless/windowed mode provides the most predictable environment for companion overlays.
 
 ## Linux
 
@@ -215,9 +194,8 @@ KDE Plasma
 Wayland
 ```
 
-The generic implementation should be attempted first.
-
-If KDE/Wayland requires native handling for a specific operation, isolate it in:
+Use the generic Tauri implementation first. If KDE/Wayland requires native
+handling for a specific operation, isolate it in:
 
 ```text
 platform/linux.rs
@@ -235,20 +213,19 @@ Do not add X11 dependencies unless an actual requirement is demonstrated.
 ### Known limitation: the global hotkey
 
 `global-hotkey` grabs through X11, so the shortcut does not fire under native
-Wayland. Confirmed on KDE Plasma. The tray menu and the main window's Toggle
-Overlay button work regardless, and the hotkey does fire under XWayland
+Wayland. Confirmed on KDE Plasma. The tray menu and **Settings > Overlay**
+work regardless, and the hotkey does fire under XWayland
 (`GDK_BACKEND=x11`).
 
 This is not currently worth a workaround: WARDOGS has no full Linux support,
-so the overlay has no game to sit over here. Revisit if that changes. A fix
+so the overlay has no game to sit over here. A fix
 would need a compositor-specific shortcut registration in `platform/linux.rs`,
 for example KWin's global shortcut DBus interface.
 
 ## X11
 
-X11 support should be treated as a compatibility target rather than the primary Linux implementation.
-
-If the generic Tauri implementation works, no special X11 code is necessary.
+X11 is a compatibility target rather than the primary Linux implementation.
+The generic Tauri implementation covers it; no special X11 code exists.
 
 ## Windows
 
@@ -269,19 +246,8 @@ Do not use Windows APIs in shared application logic.
 
 ## Platform abstraction
 
-Recommended structure:
-
-```rust
-pub trait PlatformOverlay {
-    fn show(&self) -> Result<()>;
-    fn hide(&self) -> Result<()>;
-    fn toggle(&self) -> Result<()>;
-    fn set_position(&self, x: i32, y: i32) -> Result<()>;
-    fn set_size(&self, width: u32, height: u32) -> Result<()>;
-}
-```
-
-Then:
+Overlay behavior goes through `OverlayController` (see
+`docs/ARCHITECTURE.md`). The platform module is selected at compile time:
 
 ```rust
 #[cfg(target_os = "windows")]
@@ -289,6 +255,9 @@ mod windows;
 
 #[cfg(target_os = "linux")]
 mod linux;
+
+#[cfg(not(any(target_os = "windows", target_os = "linux")))]
+mod fallback;
 ```
 
 The shared overlay manager decides **what** should happen.
@@ -299,56 +268,37 @@ The platform module decides **how** the operating system accomplishes it.
 
 The overlay must fail gracefully.
 
-Examples:
-
 ### WARDOGS closed
 
-The app should continue working normally.
+The app keeps working normally.
 
 ### Saved monitor disconnected
 
-Move the overlay to the primary monitor.
+The overlay moves to the primary monitor.
 
 ### Hotkey registration fails
 
-Show a settings warning and allow the user to choose another shortcut.
+Settings shows the error and lets the user choose another shortcut.
 
 ### Overlay cannot focus
 
-Keep it visible rather than crashing.
+It stays visible rather than failing.
 
 ### Game changes resolution
 
-Do not assume the overlay must resize automatically.
+The overlay does not resize.
 
 ## Overlay geometry
 
-Store logical or physical coordinates consistently.
-
-Always account for:
+Geometry is stored in physical pixels and always has to account for:
 
 - monitor scale factor
 - DPI
 - multiple monitors
 - monitor origin
 - negative monitor coordinates
-- monitor rotation if applicable
 
 Do not assume monitor 0 begins at `(0, 0)`.
-
-## Overlay configuration
-
-```rust
-struct OverlayConfig {
-    x: i32,
-    y: i32,
-    width: u32,
-    height: u32,
-    monitor_id: Option<String>,
-}
-```
-
-The exact monitor identifier should be treated as implementation detail.
 
 ### Implemented behavior
 
@@ -357,15 +307,17 @@ monitors that exist at show time instead, which needs no stable monitor name
 and handles a rearranged desktop as well as a disconnected one:
 
 - Size is held between `OVERLAY_MIN_WIDTH`/`OVERLAY_MIN_HEIGHT` and the
-  largest monitor, so a size saved on a big screen still fits a small one.
+  largest monitor. The window is pinned, so in practice this keeps the saved
+  size equal to the fixed one.
 - Geometry that leaves less than `MIN_VISIBLE` px of the overlay on any
   monitor is recentered on the primary one. The overlay is undecorated, so an
   off-screen one cannot be dragged back.
-- The user can also recenter on demand with `reset_overlay_geometry`.
+- The user can also recenter on demand from **Settings > Overlay**
+  (`reset_overlay_geometry`).
 
-Geometry is held in memory while the overlay moves and resizes, and written
-to `config.json` in the app config directory on hide, on an explicit
-move/resize command, and on quit from the tray. A drag emits far too many
+Geometry is held in memory while the overlay moves, and written to
+`config.json` in the app config directory on hide, on an explicit
+position/size command, and on quit from the tray. A drag emits far too many
 move events to write each one.
 
 ## Testing checklist
@@ -396,7 +348,7 @@ move events to write each one.
 - [ ] Click text field
 - [ ] Move pointer outside
 - [ ] Return focus to game
-- [ ] Shortcut toggle
+- [ ] Shortcut toggle (expected to fail under native Wayland, see above)
 - [ ] Alt-tab
 - [ ] Multiple monitors
 - [ ] Fractional scaling

@@ -3,8 +3,7 @@
 Source data for the calculator, in `apps/desktop/src/calculator/data/weapons.json`.
 Extracted and verified 2026-09-10.
 
-This answers the open question left by `docs/MILESTONES.md` Milestone 1: the
-game does not need a physics model. Elevation is a lookup in a firing table.
+The calculator needs no physics model. Elevation is a lookup in a firing table.
 
 ## Coordinates
 
@@ -60,8 +59,8 @@ same code path: solve every arc, present whichever come back.
   returns no solution rather than an extrapolated one.
 - **One range can carry two mils.** `sph2.high` has both 610 and 620 at
   2629 m, the top of its arc. That is the only such case in the current data,
-  but the lookup should return a min/max pair for an exact hit on a duplicated
-  range and render it as a span (`610-620`), not silently pick one.
+  but the lookup returns a min/max pair for an exact hit on a duplicated range
+  and renders it as a span (`610-620`) rather than silently picking one.
 
 ## Verified test vectors
 
@@ -72,8 +71,7 @@ Both weapons reproduce a reference implementation exactly:
 | L81 Mortar | 50, 50 | 53, 54 | 500 m | 36.9 deg | 461 |
 | SPH-2 | 50, 50 | 65, 50 | 1500 m | 90.0 deg | 84 low / 1213 high |
 
-These are usable as the Milestone 6 exit criterion ("known test coordinates
-produce known expected results").
+`apps/desktop/src/calculator/solution.test.ts` pins both, along with the `610-620` span.
 
 ## Maps
 

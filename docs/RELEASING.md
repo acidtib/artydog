@@ -49,9 +49,11 @@ claims the old name. Do not reuse a retired repository name.
 
 The app checks
 `https://github.com/acidtib/artydog/releases/latest/download/latest.json` on
-main-window start. If a newer version is there, a banner offers "Update &
-restart"; the overlay stays clean during play. Failures are silent, so before
-the first stable release exists the 404 shows nothing.
+main-window start, and again whenever the user asks from **Settings >
+General**. If a newer version is there, a dot appears on the settings cog and
+Settings offers to install it and restart; the overlay stays clean during
+play. A failed check shows as a quiet note in Settings rather than an error,
+because being offline fails the same way as a broken endpoint.
 
 ## Signing
 
@@ -75,8 +77,9 @@ An installed app verifies every download against the public key baked into
 **its own** build, not the one in the latest release. So a release signed
 with a new key is rejected by everything already installed under the old one.
 
-**Before the first stable release** (where the project is now) rotation is
-free, because nothing out there checks signatures yet:
+Stable releases are out (`app-v0.1.1` onward), so rotation now needs the
+transition release described below. The short path only applies to a fresh
+project with no stable release yet, because then nothing checks signatures:
 
 ```bash
 pnpm tauri signer generate -w <key-path> -f

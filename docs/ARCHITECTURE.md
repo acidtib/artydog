@@ -1,17 +1,17 @@
 # ArtyDog - Architecture
 
 The repository is a pnpm workspace with two apps: `apps/desktop` (this app)
-and `apps/website` (the landing site). Paths below are relative to
+and `apps/website` (the website, which runs the calculator in the browser). Paths below are relative to
 `apps/desktop/`.
 
 ## 1. High-level architecture
 
 ```text
-                    ARTYDOG
+                            ARTYDOG
                               │
                 ┌─────────────┴─────────────┐
                 │                           │
-          Normal Window               Overlay Window
+           Main Window               Overlay Window
                 │                           │
                 └─────────────┬─────────────┘
                               │
@@ -33,10 +33,6 @@ and `apps/website` (the landing site). Paths below are relative to
 ```
 
 ## 2. Frontend
-
-Use React + TypeScript.
-
-Suggested structure:
 
 ```text
 src/
@@ -77,89 +73,83 @@ min/max bounds are what actually hold the size.
 
 ## 3. Rust backend
 
-Suggested structure:
-
 ```text
 src-tauri/src/
-├── lib.rs
-├── commands.rs
-├── state.rs
+├── lib.rs            # plugins, window events, command registration
+├── commands.rs       # the only bridge between React and native code
+├── state.rs          # AppState, geometry rules, CalcState
+├── tray.rs           # tray icon and close-to-tray
 ├── overlay/
-│   ├── mod.rs
-│   ├── manager.rs
-│   └── platform.rs
+│   ├── mod.rs        # OverlayController trait
+│   └── manager.rs
 ├── hotkey/
 │   ├── mod.rs
 │   └── manager.rs
 ├── config/
-│   ├── mod.rs
+│   ├── mod.rs        # versioned config.json
 │   └── persistence.rs
 └── platform/
     ├── mod.rs
     ├── windows.rs
-    └── linux.rs
+    ├── linux.rs
+    └── fallback.rs
 ```
 
 ## 4. Overlay abstraction
 
 Do not scatter Windows/Linux conditional code throughout the application.
-
-Create a single platform-neutral interface.
-
-Conceptually:
+All overlay behavior goes through one platform-neutral trait
+(`src-tauri/src/overlay/mod.rs`):
 
 ```rust
 pub trait OverlayController {
-    fn show(&self) -> Result<()>;
-    fn hide(&self) -> Result<()>;
-    fn toggle(&self) -> Result<()>;
-    fn is_visible(&self) -> Result<bool>;
-
-    fn set_position(&self, position: Position) -> Result<()>;
-    fn set_size(&self, size: Size) -> Result<()>;
-
-    fn set_interactive(&self, interactive: bool) -> Result<()>;
-    fn focus(&self) -> Result<()>;
+    fn show(&self) -> OverlayResult<()>;
+    fn hide(&self) -> OverlayResult<()>;
+    fn toggle(&self) -> OverlayResult<()>; // provided: hide if visible, else show
+    fn is_visible(&self) -> OverlayResult<bool>;
+    fn set_position(&self, x: i32, y: i32) -> OverlayResult<()>;
+    fn set_size(&self, width: u32, height: u32) -> OverlayResult<()>;
+    fn focus(&self) -> OverlayResult<()>;
+    fn geometry(&self) -> OverlayResult<OverlayGeometry>;
 }
 ```
 
-The application calls this abstraction.
+Commands, the hotkey handler and the tray call this abstraction. Platform
+differences live in `platform/`, selected with `cfg(target_os)`.
 
-It should not know whether it is running on Windows or Linux.
+## 5. Window model
 
-## 5. Overlay window model
-
-Use a dedicated Tauri window for the overlay.
-
-Conceptually:
+Two Tauri windows out of one process:
 
 ```text
 Tauri application
 │
 ├── main
-│   └── normal application window
+│   └── compact calculator window
 │
 └── overlay
     └── dedicated overlay window
 ```
 
-The overlay window should normally be:
+The main window is on the taskbar. Minimizing or closing it hides it to the
+tray, so the shortcut keeps working; a tray click toggles it and quitting
+goes through the tray menu. A second launch surfaces the running instance
+instead of starting another.
 
-- hidden
+The overlay window is:
+
+- hidden at start
 - undecorated
-- always-on-top while active
+- always-on-top
 - positioned using saved coordinates
 - pinned to one size (382x443, the same equal min/max trick as the main
   window), mirrored by `OVERLAY_DEFAULT_*` in `state.rs` so reset centers on
   the size the window actually holds
 - interactive while visible
-- excluded from the taskbar where appropriate
+- excluded from the taskbar
 
-Do not destroy/recreate the overlay on every toggle.
-
-Create it once and show/hide it.
-
-This avoids state loss and unnecessary initialization.
+Do not destroy and recreate the overlay on every toggle. Create it once and
+show/hide it, which avoids state loss and repeated initialization.
 
 ## 6. Overlay lifecycle
 
@@ -167,26 +157,21 @@ This avoids state loss and unnecessary initialization.
 Application start
        │
        ▼
-Create main window
+Create main window and hidden overlay window
        │
        ▼
-Create hidden overlay window
-       │
-       ▼
-Register global M shortcut
+Register the toggle shortcut (Alt+M by default)
        │
        ▼
 Application idle
        │
-       ├── M pressed
+       ├── shortcut pressed
        │      ↓
-       │   show overlay
-       │      ↓
-       │   restore saved position/size
+       │   restore saved position, show overlay
        │
-       └── M pressed
+       └── shortcut pressed
               ↓
-           hide overlay
+           hide overlay, save position
 ```
 
 ## 7. Shared calculator state
@@ -203,9 +188,12 @@ the single path that reconciles both windows.
 Nothing derived is ever shared. Each window runs `deriveCalcView`
 (`src/calculator/derive.ts`), which resolves the weapon, parses the
 inputs, shows errors only for non-empty invalid fields, and computes
-the solution live. The main window renders `Calculator`, the overlay
-renders `OverlayCalculator`; both are controlled components over the
+the solution and status live. The main window renders `Calculator`, the
+overlay renders `OverlayCalculator`; both are controlled components over the
 same state.
+
+The state lives in memory for the life of the process and is not written to
+disk.
 
 ## 8. Focus behavior
 
@@ -229,40 +217,27 @@ This is preferable to implementing a global mouse hook.
 
 ## 9. Global hotkey
 
-Use the official Tauri global-shortcut plugin rather than implementing separate low-level keyboard hooks for the first version.
+The toggle uses the official Tauri global-shortcut plugin rather than
+low-level keyboard hooks.
 
-Register:
+The default is `Alt+M`, not bare `M`: a registered shortcut is exclusive, and
+WARDOGS binds `M` to its map. The user can rebind it in Settings. A failed
+registration is reported there, and the app never pretends a shortcut is
+active when registration failed.
 
-```text
-M
-```
-
-as the default overlay toggle.
-
-Important:
-
-- allow the user to change the shortcut later
-- detect registration failures
-- show a settings error if another application owns the shortcut
-- never silently pretend the shortcut is active when registration failed
-
-The plugin supports Windows and Linux.
+Under native Wayland the shortcut does not fire; see `docs/OVERLAY.md`.
 
 ## 10. Game awareness
 
-The first implementation does not need to identify WARDOGS.
+The app does not identify WARDOGS and always registers the hotkey.
 
-The app can always register the hotkey.
-
-However, overlay behavior should be controlled by an activation policy:
+A future setting may add an activation policy:
 
 ```text
 Always available
       OR
 Only when WARDOGS is foreground
 ```
-
-Make this a future setting.
 
 Do not make process detection a dependency of the MVP.
 
@@ -321,32 +296,21 @@ How inputs and solutions flow between windows is covered in section 7,
 
 ## 13. Configuration persistence
 
-Persist:
+`config.json` in the app config directory holds:
 
-- overlay position
-- overlay size
-- selected monitor if needed
-- hotkey
-- theme
-- activation mode
-- calculator preferences
-
-Example:
+- overlay geometry (position, plus the fixed size)
+- the toggle shortcut, once the user changes it
 
 ```json
 {
-  "overlay": {
-    "x": 1450,
-    "y": 120,
-    "width": 420,
-    "height": 520
-  },
-  "hotkey": "Alt+M",
-  "activationMode": "always"
+  "schemaVersion": 1,
+  "overlay": { "x": 1450, "y": 120, "width": 382, "height": 443 },
+  "hotkey": "Alt+M"
 }
 ```
 
-Use a versioned configuration format so future releases can migrate settings.
+The format is versioned so future releases can migrate settings. Future
+settings such as theme or activation mode belong here too.
 
 ## 14. Coordinate system
 
@@ -392,8 +356,6 @@ Artillery calculator
         ↓
 Bearing / distance / elevation
 ```
-
-Do not implement map rendering in the first MVP.
 
 ## 16. Why Tauri
 
@@ -465,51 +427,23 @@ rather than allowing generic system execution.
 
 ## 20. Testing layers
 
-### Calculator tests
+### Calculator and component tests
 
-Pure unit tests:
-
-```text
-coordinate input
-      ↓
-expected solution
-```
+Vitest, run with `pnpm test`: pure unit tests for the math
+(`coordinate input → expected solution`, pinned to the reference vectors in
+`docs/BALLISTICS.md`), plus component and hook tests with the Tauri API
+mocked.
 
 ### Rust tests
 
-Test:
+`cargo test`, covering:
 
-- state transitions
-- configuration serialization
-- overlay state machine
-
-### Integration tests
-
-Test:
-
-```text
-M
-↓
-overlay visible
-
-M
-↓
-overlay hidden
-```
+- geometry clamping and recentering
+- configuration and `CalcState` serialization
+- the overlay toggle decision
+- tray click handling
+- the overlay size staying in step with `tauri.conf.json`
 
 ### Manual platform tests
 
-Windows:
-
-- Windows 10/11
-- borderless WARDOGS
-- windowed WARDOGS
-- multiple monitors
-
-Linux:
-
-- KDE Wayland
-- X11 if supported
-- WARDOGS through Proton
-- single/multiple monitors
-- different scaling factors
+The Windows and KDE Wayland checklists live in `docs/OVERLAY.md`.
