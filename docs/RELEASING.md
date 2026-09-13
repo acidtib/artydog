@@ -15,6 +15,9 @@ is still running.
 
 ## Stable
 
+Make sure the release's changes have entries at the top of `CHANGELOG.md`
+(see `AGENTS.md` for the format), then:
+
 ```bash
 pnpm release:patch   # or release:minor, release:major
 git push origin main app-v0.1.1
@@ -23,7 +26,8 @@ git push origin main app-v0.1.1
 `pnpm release:*` (the scripts live at the workspace root) moves the version in
 `apps/desktop/package.json` and the `apps/desktop/src-tauri` manifests
 (`tauri.conf.json`, `Cargo.toml`, `Cargo.lock`) together, commits as `config:
-bump version to X.Y.Z`, and tags `app-vX.Y.Z`. It does not push: pushing the
+bump version to X.Y.Z`, and tags `app-vX.Y.Z`. It also puts the version heading on the unreleased
+entries in `CHANGELOG.md`, and stops if there are none. It does not push: pushing the
 tag is what publishes the release, so it stays a separate decision. Add
 `--dry-run` to rewrite the manifests without committing.
 
@@ -37,6 +41,10 @@ in the manifests.
 Both channels run lint, tests, `cargo fmt` and `clippy` first, then build
 every platform into a draft release and publish it only once all of them have
 uploaded, so `releases/latest` never points at a half-finished release.
+
+A stable release's description is that version's section of `CHANGELOG.md`,
+and the run fails if the section is missing. A bleeding-edge build lists the
+unreleased entries instead.
 
 Publishing a stable release also redeploys the website, which reads the app
 version from `apps/desktop/package.json`, so its download links follow the

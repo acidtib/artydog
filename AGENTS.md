@@ -74,7 +74,7 @@ reader scanning `git log` needs before anything else.
     the settings module in `src-tauri/src/config/`, `scripts/`, `.mcp.json`, `.claude/`
   - `ci`: `.github/` (workflows, the shared setup action, Dependabot)
   - `tests`: `*.test.*`, `src/test/`, Rust `#[test]`
-  - `docs`: `README.md`, `docs/`, this file
+  - `docs`: `README.md`, `CHANGELOG.md`, `docs/`, this file
 - **Description**: lowercase, imperative, no trailing period. State what the
   commit does, not what bug prompted it; the "why" of a fix belongs in the
   body, not stuffed into the summary line.
@@ -99,6 +99,24 @@ commands,state: expose toggle_overlay with native visibility as truth
 ```
 
 Reverts, merges, and other special commits can ignore this format.
+
+## Changelog
+
+A change a user of the desktop app would notice gets an entry at the top of
+`CHANGELOG.md`, above the newest version heading, in the Rails format:
+
+```
+*   Describe the change the way a user would notice it.
+
+    Optional detail, wrapped and indented four spaces.
+
+    *acidtib*
+```
+
+Newest entry first. Skip changes users cannot see: CI, docs, tests,
+refactors, the website. `pnpm release:*` adds the version heading and refuses
+to run with no entries. The release copies that version's section into its
+GitHub release, and bleeding-edge builds list the unreleased entries.
 
 ## Comments
 
