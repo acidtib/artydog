@@ -22,13 +22,19 @@ function Eyebrow({ children }: { children: string }) {
 
 // Point at a recording in public/, e.g. `${import.meta.env.BASE_URL}demo.mp4`.
 const DEMO_VIDEO: string | null = null;
+const DEMO_PREVIEW = `${import.meta.env.BASE_URL}demo-preview.png`;
 
 function DemoVideo() {
   return (
     <div className="rounded-[10px] bg-gradient-to-br from-emerald-500/40 via-tool-border to-amber-500/30 p-px shadow-[0_40px_80px_-20px_rgba(0,0,0,0.9)]">
       {DEMO_VIDEO === null ? (
         <div className="relative flex aspect-video w-full flex-col items-center justify-center overflow-hidden rounded-[9px] bg-tool-base px-6 text-center">
-          <div aria-hidden="true" className="video-grid absolute inset-0" />
+          <img
+            src={DEMO_PREVIEW}
+            alt="ArtyDog overlay running over WARDOGS"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+          <div aria-hidden="true" className="absolute inset-0 bg-tool-base/50" />
           <span
             aria-hidden="true"
             className="relative flex h-14 w-14 items-center justify-center rounded-full border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 sm:h-20 sm:w-20"
@@ -48,6 +54,7 @@ function DemoVideo() {
         <video
           className="block aspect-video w-full rounded-[9px] bg-black"
           src={DEMO_VIDEO}
+          poster={DEMO_PREVIEW}
           controls
           playsInline
           preload="metadata"
