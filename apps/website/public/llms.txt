@@ -1,0 +1,36 @@
+# ArtyDog
+
+> ArtyDog is a free, open-source (MIT) artillery calculator for the game WARDOGS. Enter an artillery grid coordinate and a target grid coordinate, and it returns the distance, azimuth and elevation in mils for the L81 Mortar and the SPH-2. It runs in the browser at https://artydog.win/ or as a desktop app for Windows and Linux that can sit on top of the game as an overlay.
+
+ArtyDog does not touch the game. It is an ordinary window: it does not inject code, read game memory, modify game files or send input to WARDOGS. The player reads grid coordinates off the map and types them in.
+
+Key facts:
+
+- Coordinates are WARDOGS grid units. One unit is 100 m on every map, so no per-map calibration is needed.
+- Azimuth is in degrees with 0 at north (+Y) and 90 at east (+X), and the result also shows the compass point.
+- Elevation is interpolated from the in-game firing tables, not computed from a physics model. Targets outside a weapon's range get no elevation.
+- L81 Mortar: range 132 to 684 m, one firing arc.
+- SPH-2: range 780 to 2629 m, a low arc and a high arc.
+- Reference check: artillery at 50, 50 and target at 53, 54 with the L81 Mortar gives 500 m, 36.9 degrees, 461 mil.
+- The desktop overlay is toggled with Alt+M by default, and the shortcut can be rebound in Settings. A global shortcut takes that key away from the game while ArtyDog runs, which is why the default is not a bare M.
+- On Linux the global shortcut does not fire under native Wayland; the tray menu and the Settings dialog still show and hide the overlay.
+- The desktop app keeps running in the system tray and updates itself on Windows and with the AppImage on Linux.
+
+## Use it
+
+- [Browser calculator](https://artydog.win/#calculator): The full calculator in the browser, no download needed
+- [Download the desktop app](https://github.com/acidtib/artydog/releases/latest): Windows installer, Linux AppImage and .deb
+
+## Docs
+
+- [README](https://github.com/acidtib/artydog/blob/main/README.md): What ArtyDog is, installing, using the overlay, known limitations and building from source
+- [Ballistics and coordinates](https://github.com/acidtib/artydog/blob/main/docs/BALLISTICS.md): Firing tables, solution math, map bounds and verified test values
+- [Changelog](https://github.com/acidtib/artydog/blob/main/CHANGELOG.md): Every change, grouped by release
+
+## Optional
+
+- [Source code](https://github.com/acidtib/artydog): Tauri 2 desktop app with a React and TypeScript frontend over Rust, plus the website
+- [Contributing](https://github.com/acidtib/artydog/blob/main/CONTRIBUTING.md): Running the checks, commit messages and changelog entries
+- [License](https://github.com/acidtib/artydog/blob/main/LICENSE): MIT
+
+ArtyDog is an unofficial fan-made tool, not affiliated with or endorsed by the developers of WARDOGS.

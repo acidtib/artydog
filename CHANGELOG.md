@@ -1,3 +1,6 @@
+*   Add an `llms.txt` to the website, so AI agents can learn what ArtyDog is
+    and where its docs live.
+
 *   Add Cloudflare Web Analytics to the website.
 
 *   Prerender the website, so search engines and link previews see its content
