@@ -24,7 +24,7 @@ Compact calculator window.
 Properties:
 
 - undecorated, with its own header (drag region, minimize, close)
-- fixed size, 382x476
+- fixed size, 382x477
 - taskbar visible
 - minimize and close hide it to the tray
 
@@ -37,7 +37,7 @@ Properties:
 - hidden initially
 - undecorated, with a drag bar and a hide button
 - always-on-top
-- fixed size, 382x443
+- fixed size, 382x444
 - saved position
 - interactive
 - no taskbar entry

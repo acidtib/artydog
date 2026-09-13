@@ -1,3 +1,14 @@
+*   Ignore Rust build output in the desktop dev server's file watcher, so
+    cargo writes no longer trigger needless reloads.
+
+*   Hide the settings cog in the website's calculator demo, since the browser
+    version has no settings.
+
+*   Pin both windows with `resizable: false` instead of equal min and max
+    bounds, at `382x477` for the main window and `382x444` for the overlay.
+
+    *[acidtib](https://github.com/acidtib)*
+
 *   Run the Rust CI jobs only when the Rust backend changes, and skip CI for
     changes that only touch Markdown or docs.
 

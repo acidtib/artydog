@@ -15,7 +15,7 @@ import {
 
 /// A working replica of the app's main window. Class names mirror the desktop
 /// components (apps/desktop/src/components) so the landing page shows the real
-/// thing; only the load-in animation is page-only.
+/// thing; the page adds a load-in animation and leaves out the settings cog.
 
 /// What a coordinate can look like while it is still being typed.
 const PARTIAL_NUMBER = /^[+-]?(\d+\.?\d*)?$/;
@@ -325,22 +325,7 @@ export default function DemoCalculator({ version }: { version: string }) {
         </div>
       </div>
 
-      <div className="flex h-[33px] items-center justify-between border-t border-tool-hairline px-3 pb-px">
-        <span aria-hidden="true" className="flex h-6 w-6 items-center justify-center text-neutral-500">
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <circle cx="12" cy="12" r="3" />
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-          </svg>
-        </span>
+      <div className="flex h-[33px] items-center justify-end border-t border-tool-hairline px-3 pb-px">
         <span className="font-mono text-[11px] text-neutral-600">
           v{version}
         </span>

@@ -6,7 +6,7 @@ pub const OVERLAY_LABEL: &str = "overlay";
 pub const MAIN_LABEL: &str = "main";
 /// Mirrors the pinned `overlay` window in `tauri.conf.json`; a test fails if they drift.
 pub const OVERLAY_DEFAULT_WIDTH: u32 = 382;
-pub const OVERLAY_DEFAULT_HEIGHT: u32 = 443;
+pub const OVERLAY_DEFAULT_HEIGHT: u32 = 444;
 pub const OVERLAY_MIN_WIDTH: u32 = OVERLAY_DEFAULT_WIDTH;
 pub const OVERLAY_MIN_HEIGHT: u32 = OVERLAY_DEFAULT_HEIGHT;
 
@@ -194,8 +194,7 @@ mod tests {
 
         assert_eq!(overlay["width"], OVERLAY_DEFAULT_WIDTH);
         assert_eq!(overlay["height"], OVERLAY_DEFAULT_HEIGHT);
-        assert_eq!(overlay["minWidth"], OVERLAY_MIN_WIDTH);
-        assert_eq!(overlay["minHeight"], OVERLAY_MIN_HEIGHT);
+        assert_eq!(overlay["resizable"].as_bool(), Some(false));
     }
 
     const PRIMARY: MonitorRect = MonitorRect {
