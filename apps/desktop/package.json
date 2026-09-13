@@ -1,7 +1,7 @@
 {
   "name": "@artydog/desktop",
   "private": true,
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "ArtyDog - Instant firing solutions in WARDOGS",
   "license": "MIT",
   "type": "module",

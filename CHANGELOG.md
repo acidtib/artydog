@@ -1,3 +1,5 @@
+## ArtyDog 0.2.3 (September 13, 2026) ##
+
 *   Keep the overlay at a stable size across hide and show cycles: the restore
     path read the outer window size but wrote it back as the client area, so an
     undecorated window grew by its hidden border on every cycle.
