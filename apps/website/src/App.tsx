@@ -324,14 +324,15 @@ export default function App() {
                 Artillery calculator for WARDOGS
               </p>
               <h1 className="mt-5 font-display text-[clamp(3.2rem,8vw,6.5rem)] font-bold uppercase leading-[0.95] tracking-[0.01em] text-neutral-100">
-                Put rounds
+                Put rounds{" "}
                 <span className="block">
                   <span className="text-emerald-400">on target</span>.
                 </span>
               </h1>
               <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-neutral-400 sm:text-lg">
                 Stop guessing your shots. Enter your artillery and target grids
-                and get the exact azimuth and elevation to land them.
+                and get the exact distance, azimuth and mil elevation to land
+                them with the L81 Mortar or SPH-2.
               </p>
               <p className="mx-auto mt-3 max-w-2xl text-base leading-relaxed text-neutral-300 sm:text-lg">
                 Run it as an overlay on top of the game, or use it right here in

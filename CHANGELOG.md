@@ -1,3 +1,11 @@
+*   Prerender the website, so search engines and link previews see its content
+    without running JavaScript.
+
+    Also add a sitemap, a robots.txt, a canonical link, structured data for
+    the app, a shorter meta description, and a 404 page.
+
+    *[acidtib](https://github.com/acidtib)*
+
 ## ArtyDog 0.2.1 (September 13, 2026) ##
 
 *   Give the website favicons at 16, 32 and 180 px.
