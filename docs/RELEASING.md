@@ -8,6 +8,11 @@ Every push to `main` rebuilds the rolling `bleeding-edge` prerelease. CI
 stamps a unique version first (`0.1.0-dev.20260910.gabc1234`), so a build is
 identifiable and sorts below the next stable release. Nothing to do by hand.
 
+Pushes that only touch Markdown, `docs/` or the website are skipped. Each
+build replaces the previous release, so old assets do not pile up and the
+`bleeding-edge` tag moves to the new commit. A newer push cancels a build that
+is still running.
+
 ## Stable
 
 ```bash
@@ -24,7 +29,21 @@ tag is what publishes the release, so it stays a separate decision. Add
 
 Pushing the tag builds a normal (non-prerelease) GitHub release. Because it
 is not a prerelease, it becomes what `releases/latest` resolves to, which is
-where the updater looks.
+where the updater looks. The run stops if the tag does not match the version
+in the manifests.
+
+## Pipeline
+
+Both channels run lint, tests, `cargo fmt` and `clippy` first, then build
+every platform into a draft release and publish it only once all of them have
+uploaded, so `releases/latest` never points at a half-finished release.
+
+Publishing a stable release also redeploys the website, which reads the app
+version from `apps/desktop/package.json`, so its download links follow the
+release without a manual edit.
+
+Third-party actions are pinned to commit SHAs because the build jobs hold the
+signing key. Dependabot keeps the pins current.
 
 ## The repository has to be public
 

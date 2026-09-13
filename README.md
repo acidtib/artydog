@@ -44,7 +44,7 @@ settings cog, and **Settings > General** offers to install it and restart. Only
 the Windows installer and the AppImage can self-update; a `.deb` install has to
 be upgraded by hand.
 
-Every push to `main` also publishes a
+Every change to the app on `main` also publishes a
 [bleeding-edge](https://github.com/acidtib/artydog/releases/tag/bleeding-edge)
 prerelease, if you want the newest changes before a stable release.
 
