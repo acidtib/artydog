@@ -1,3 +1,5 @@
+*   Give the website favicons at 16, 32 and 180 px.
+
 *   Give the app, tray and website the ArtyDog icon: a dog's head inside a
     rangefinder reticle.
 
