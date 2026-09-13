@@ -1,0 +1,41 @@
+name: Changelog
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: changelog-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  entry:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require a changelog entry
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          SKIP: ${{ contains(github.event.pull_request.labels.*.name, 'no changelog') }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$SKIP" == true ]]; then
+            echo "Labeled 'no changelog', no entry needed."
+            exit 0
+          fi
+
+          files=$(gh api "repos/$GH_REPO/pulls/$PR/files" --paginate --jq '.[].filename')
+
+          if grep -qx 'CHANGELOG.md' <<< "$files"; then
+            echo "CHANGELOG.md is updated."
+            exit 0
+          fi
+
+          echo "::error::This pull request does not update CHANGELOG.md. Add an entry at the top (see CONTRIBUTING.md)."
+          exit 1
