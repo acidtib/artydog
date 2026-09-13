@@ -5,6 +5,8 @@
 //
 //   node scripts/bump.mjs patch|minor|major [--dry-run]
 
+import { readFileSync, writeFileSync } from "node:fs";
+import { CHANGELOG, stamp } from "./changelog.mjs";
 import { currentVersion, run, setVersion } from "./version.mjs";
 
 const LEVELS = ["patch", "minor", "major"];
@@ -41,15 +43,24 @@ if (run("git", ["tag", "--list", tag]) !== "") {
   process.exit(1);
 }
 
+let changelog;
+try {
+  changelog = stamp(readFileSync(CHANGELOG, "utf8"), version, new Date());
+} catch (e) {
+  console.error(e.message);
+  process.exit(1);
+}
+
 console.log(`${from} -> ${version}`);
 setVersion(version);
+writeFileSync(CHANGELOG, changelog);
 
 if (dryRun) {
-  console.log("dry run: manifests rewritten, nothing committed");
+  console.log("dry run: manifests and changelog rewritten, nothing committed");
   process.exit(0);
 }
 
-run("git", ["add", "apps/desktop/package.json", "apps/desktop/src-tauri/tauri.conf.json", "apps/desktop/src-tauri/Cargo.toml", "apps/desktop/src-tauri/Cargo.lock"]);
+run("git", ["add", "CHANGELOG.md", "apps/desktop/package.json", "apps/desktop/src-tauri/tauri.conf.json", "apps/desktop/src-tauri/Cargo.toml", "apps/desktop/src-tauri/Cargo.lock"]);
 run("git", ["commit", "-m", `config: bump version to ${version}`]);
 run("git", ["tag", tag]);
 
