@@ -110,8 +110,10 @@ A change a user of the desktop app would notice gets an entry at the top of
 
     Optional detail, wrapped and indented four spaces.
 
-    *acidtib*
+    *[acidtib](https://github.com/acidtib)*
 ```
+
+The author line links to the author's GitHub account.
 
 Newest entry first. Skip changes users cannot see: CI, docs, tests,
 refactors, the website. `pnpm release:*` adds the version heading and refuses
