@@ -1,3 +1,8 @@
+*   Add contributing guidelines, a pull request template, and a check that
+    every pull request adds a changelog entry.
+
+    *[acidtib](https://github.com/acidtib)*
+
 ## ArtyDog 0.2.0 (September 13, 2026) ##
 
 *   Put the full calculator in the overlay, sharing one set of inputs with the

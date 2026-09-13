@@ -165,6 +165,7 @@ tables.
 | [docs/OVERLAY.md](docs/OVERLAY.md) | Overlay window design, platform behavior, geometry rules |
 | [docs/BALLISTICS.md](docs/BALLISTICS.md) | Firing tables and coordinate conversion |
 | [docs/RELEASING.md](docs/RELEASING.md) | Cutting a release, signing, key rotation |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Running the checks, commit messages, changelog entries |
 | [AGENTS.md](AGENTS.md) | Conventions for anyone (or anything) writing code here |
 
 ## License

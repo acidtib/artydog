@@ -72,9 +72,9 @@ reader scanning `git log` needs before anything else.
   - `config`: `tauri.conf.json`, `vite.config.ts`, `Cargo.toml`, `package.json`,
     the root workspace `package.json`/`pnpm-workspace.yaml`, capabilities, and
     the settings module in `src-tauri/src/config/`, `scripts/`, `.mcp.json`, `.claude/`
-  - `ci`: `.github/` (workflows, the shared setup action, Dependabot)
+  - `ci`: `.github/` (workflows, the shared setup action, Dependabot, the PR template)
   - `tests`: `*.test.*`, `src/test/`, Rust `#[test]`
-  - `docs`: `README.md`, `CHANGELOG.md`, `docs/`, this file
+  - `docs`: `README.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, `docs/`, this file
 - **Description**: lowercase, imperative, no trailing period. State what the
   commit does, not what bug prompted it; the "why" of a fix belongs in the
   body, not stuffed into the summary line.
@@ -102,23 +102,26 @@ Reverts, merges, and other special commits can ignore this format.
 
 ## Changelog
 
-A change a user of the desktop app would notice gets an entry at the top of
-`CHANGELOG.md`, above the newest version heading, in the Rails format:
+Every change gets an entry at the top of `CHANGELOG.md`, above the newest
+version heading, in the Rails format. That includes commits pushed straight to
+`main`: add the entry in the same commit.
 
 ```
-*   Describe the change the way a user would notice it.
+*   Describe the change.
 
     Optional detail, wrapped and indented four spaces.
 
-    *[acidtib](https://github.com/acidtib)*
+    *[your-username](https://github.com/your-username)*
 ```
 
-The author line links to the author's GitHub account.
+The author line links to the GitHub account of whoever made the change.
+Contributor-facing instructions live in `CONTRIBUTING.md`.
 
-Newest entry first. Skip changes users cannot see: CI, docs, tests,
-refactors, the website. `pnpm release:*` adds the version heading and refuses
-to run with no entries. The release copies that version's section into its
-GitHub release, and bleeding-edge builds list the unreleased entries.
+Newest entry first. `pnpm release:*` adds the version heading and refuses to
+run with no entries. The release copies that version's section into its GitHub
+release, and bleeding-edge builds list the unreleased entries. The Changelog
+workflow fails a pull request that does not touch `CHANGELOG.md`, unless a
+maintainer labels it `no changelog`, for example a Dependabot update.
 
 ## Comments
 

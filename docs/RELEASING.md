@@ -16,7 +16,7 @@ is still running.
 ## Stable
 
 Make sure the release's changes have entries at the top of `CHANGELOG.md`
-(see `AGENTS.md` for the format), then:
+(see `CONTRIBUTING.md` for the format), then:
 
 ```bash
 pnpm release:patch   # or release:minor, release:major
