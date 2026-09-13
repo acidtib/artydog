@@ -41,7 +41,7 @@ WEBKIT_DISABLE_DMABUF_RENDERER=1 pnpm tauri dev
 
 `cargo check`/`cargo test` in `src-tauri` need `dist/` to exist
 (`tauri.conf.json` points `frontendDist` there), so run `pnpm build` first
-on a fresh checkout. CI does this in its rust job.
+on a fresh checkout. The Rust workflow does this before its cargo steps.
 
 ## Commit messages
 

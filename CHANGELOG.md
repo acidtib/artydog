@@ -1,3 +1,8 @@
+*   Run the Rust CI jobs only when the Rust backend changes, and skip CI for
+    changes that only touch Markdown or docs.
+
+    *[acidtib](https://github.com/acidtib)*
+
 *   Add an `llms.txt` to the website, so AI agents can learn what ArtyDog is
     and where its docs live.
 
