@@ -212,8 +212,10 @@ impl OverlayController for OverlayManager {
         let position = window
             .outer_position()
             .map_err(|e| format!("failed to read overlay position: {e}"))?;
+        // set_size writes the client area, so read it back there too; outer_size
+        // would add the hidden border of an undecorated window on every restore.
         let size = window
-            .outer_size()
+            .inner_size()
             .map_err(|e| format!("failed to read overlay size: {e}"))?;
         Ok(OverlayGeometry {
             x: position.x,

@@ -1,3 +1,9 @@
+*   Keep the overlay at a stable size across hide and show cycles: the restore
+    path read the outer window size but wrote it back as the client area, so an
+    undecorated window grew by its hidden border on every cycle.
+
+    *[acidtib](https://github.com/acidtib)*
+
 ## ArtyDog 0.2.2 (September 13, 2026) ##
 
 *   Ignore Rust build output in the desktop dev server's file watcher, so
