@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
 import DemoCalculator from "./components/DemoCalculator";
+import desktop from "../../desktop/package.json";
 
 const REPO = "https://github.com/acidtib/artydog";
-// Bump these together when a release ships; the demo footer shows the same.
-const VERSION = "0.1.3";
+// Publishing a stable release redeploys the site, so the links follow it.
+const VERSION = desktop.version;
 const TAG = `app-v${VERSION}`;
 
 const asset = (file: string) => `${REPO}/releases/download/${TAG}/${file}`;

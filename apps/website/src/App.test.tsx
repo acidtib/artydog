@@ -7,6 +7,7 @@ import {
 } from "@testing-library/react";
 import { afterEach, expect, it } from "vitest";
 import App from "./App";
+import desktop from "../../desktop/package.json";
 
 afterEach(() => {
   cleanup();
@@ -21,7 +22,9 @@ it("shows the headline and the current version", () => {
   expect(
     screen.getByText("Artillery calculator for WARDOGS"),
   ).toBeInTheDocument();
-  expect(screen.getAllByText(/v0\.1\.3/).length).toBeGreaterThan(0);
+  expect(
+    screen.getAllByText(`v${desktop.version}`, { exact: false }).length,
+  ).toBeGreaterThan(0);
 });
 
 it("offers both the browser calculator and the overlay download", () => {
