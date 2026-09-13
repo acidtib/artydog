@@ -68,7 +68,11 @@ impl OverlayGeometry {
 
     /// A copy with `width`/`height` replaced, keeping the current position.
     pub fn merged_size(self, width: u32, height: u32) -> Self {
-        Self { width, height, ..self }
+        Self {
+            width,
+            height,
+            ..self
+        }
     }
 
     fn right(self) -> i64 {
@@ -132,7 +136,7 @@ pub struct HotkeyStatus {
 /// Raw calculator inputs shared by both windows. Text, not parsed values:
 /// each window derives errors and the solution locally, so nothing
 /// derived has to be kept in sync.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CalcState {
     pub weapon_id: String,
@@ -140,18 +144,6 @@ pub struct CalcState {
     pub artillery_y: String,
     pub target_x: String,
     pub target_y: String,
-}
-
-impl Default for CalcState {
-    fn default() -> Self {
-        Self {
-            weapon_id: String::new(),
-            artillery_x: String::new(),
-            artillery_y: String::new(),
-            target_x: String::new(),
-            target_y: String::new(),
-        }
-    }
 }
 
 pub struct AppState {
@@ -190,9 +182,8 @@ mod tests {
     /// Reset centers with these constants, so a mismatch persists a size the window cannot hold.
     #[test]
     fn overlay_size_matches_the_window_config() {
-        let config: serde_json::Value =
-            serde_json::from_str(include_str!("../tauri.conf.json"))
-                .expect("tauri.conf.json parses");
+        let config: serde_json::Value = serde_json::from_str(include_str!("../tauri.conf.json"))
+            .expect("tauri.conf.json parses");
         let overlay = config["app"]["windows"]
             .as_array()
             .expect("windows array")
@@ -348,7 +339,10 @@ mod tests {
     #[test]
     fn centered_in_uses_the_monitor_origin() {
         let centered = geometry(0, 0).centered_in(LEFT);
-        assert_eq!(centered.x, -1280 + (1280 - OVERLAY_DEFAULT_WIDTH as i32) / 2);
+        assert_eq!(
+            centered.x,
+            -1280 + (1280 - OVERLAY_DEFAULT_WIDTH as i32) / 2
+        );
         assert_eq!(centered.y, (1024 - OVERLAY_DEFAULT_HEIGHT as i32) / 2);
     }
 

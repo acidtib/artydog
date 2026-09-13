@@ -22,11 +22,9 @@ fn main_window_event(window: &tauri::Window, event: &WindowEvent) {
                 eprintln!("[window] failed to hide main window: {e}");
             }
         }
-        WindowEvent::Resized(_) => {
-            if window.is_minimized().unwrap_or(false) {
-                if let Err(e) = window.hide() {
-                    eprintln!("[window] failed to tray minimized window: {e}");
-                }
+        WindowEvent::Resized(_) if window.is_minimized().unwrap_or(false) => {
+            if let Err(e) = window.hide() {
+                eprintln!("[window] failed to tray minimized window: {e}");
             }
         }
         _ => {}
@@ -87,10 +85,7 @@ pub fn run() {
             commands::set_calc_state,
         ])
         .setup(|app| {
-            eprintln!(
-                "[setup] ArtyDog starting (platform: {})",
-                platform::name()
-            );
+            eprintln!("[setup] ArtyDog starting (platform: {})", platform::name());
             let handle = app.handle().clone();
 
             // Geometry saved by an earlier run. It is clamped to the monitors
