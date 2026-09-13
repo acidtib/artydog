@@ -4,11 +4,94 @@ on:
   push:
     branches: [main]
     tags: ["app-v*"]
+    # Path filters are not evaluated for tag pushes, so stable releases always build.
+    paths-ignore:
+      - "**.md"
+      - docs/**
+      - apps/website/**
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  # A newer push supersedes a bleeding-edge build; a stable build always finishes.
+  cancel-in-progress: ${{ github.ref_type == 'branch' }}
+
 jobs:
-  bleeding-edge:
-    if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+        with:
+          rust: "true"
+          rust-components: rustfmt, clippy
+      - run: pnpm lint
+      - run: pnpm test
+      - run: pnpm build
+      - run: cargo fmt --manifest-path apps/desktop/src-tauri/Cargo.toml --check
+      - run: cargo clippy --manifest-path apps/desktop/src-tauri/Cargo.toml --all-targets -- -D warnings
+      - run: cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml
+
+  draft:
+    needs: checks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      release-id: ${{ steps.draft.outputs.release-id }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: draft
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ "$GITHUB_REF_TYPE" == tag ]]; then
+            version=$(node -p 'require("./apps/desktop/package.json").version')
+            tag="app-v$version"
+            if [[ "$GITHUB_REF_NAME" != "$tag" ]]; then
+              echo "tag $GITHUB_REF_NAME does not match the app version $version" >&2
+              exit 1
+            fi
+
+            existing=$(gh api "repos/$GH_REPO/releases" --paginate \
+              --jq ".[] | select(.tag_name == \"$tag\") | [.id, .draft] | @tsv" | head -n1)
+            if [[ -n "$existing" ]]; then
+              read -r id draft <<< "$existing"
+              if [[ "$draft" != true ]]; then
+                echo "$tag is already published" >&2
+                exit 1
+              fi
+            else
+              id=$(gh api -X POST "repos/$GH_REPO/releases" \
+                -f tag_name="$tag" -f name="ArtyDog v$version" -F draft=true --jq .id)
+            fi
+          else
+            tag=bleeding-edge
+            # Replacing the release stops old assets piling up and moves the tag here.
+            for old in $(gh api "repos/$GH_REPO/releases" --paginate \
+              --jq ".[] | select(.tag_name == \"$tag\") | .id"); do
+              gh api -X DELETE "repos/$GH_REPO/releases/$old"
+            done
+            gh api -X DELETE "repos/$GH_REPO/git/refs/tags/$tag" > /dev/null 2>&1 || true
+
+            id=$(gh api -X POST "repos/$GH_REPO/releases" \
+              -f tag_name="$tag" -f target_commitish="$GITHUB_SHA" \
+              -f name="Bleeding-edge build" \
+              -f body="Automated bleeding-edge build from $GITHUB_SHA." \
+              -F draft=true -F prerelease=true --jq .id)
+          fi
+
+          echo "release-id=$id" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: draft
     permissions:
       contents: write
     strategy:
@@ -18,75 +101,44 @@ jobs:
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
+      - uses: ./.github/actions/setup
         with:
-          node-version: 24
-          cache: pnpm
-      - uses: dtolnay/rust-toolchain@stable
-      - name: Install Linux dependencies
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: apps/desktop/src-tauri
-          save-if: ${{ github.ref == 'refs/heads/main' }}
-      - run: pnpm install --frozen-lockfile
+          rust: "true"
+          save-rust-cache: ${{ github.ref == 'refs/heads/main' }}
       # A unique prerelease version per build, sorting below the next stable
       # release so installs are offered the upgrade.
       - name: Stamp version
+        if: github.ref_type == 'branch'
         shell: bash
         run: node scripts/stamp.mjs ${{ github.sha }}
-      - uses: tauri-apps/tauri-action@v1
+      - uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f # v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           projectPath: apps/desktop
-          tagName: bleeding-edge
-          releaseName: Bleeding-edge build
-          releaseBody: Automated bleeding-edge build from ${{ github.sha }}.
-          releaseDraft: false
-          prerelease: true
+          releaseId: ${{ needs.draft.outputs.release-id }}
 
-  stable:
-    if: ${{ startsWith(github.ref, 'refs/tags/app-v') }}
+  publish:
+    needs: [draft, build]
+    runs-on: ubuntu-latest
     permissions:
       contents: write
-    strategy:
-      fail-fast: false
-      matrix:
-        platform: [ubuntu-22.04, windows-latest]
-    runs-on: ${{ matrix.platform }}
+      actions: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RELEASE_ID: ${{ needs.draft.outputs.release-id }}
     steps:
-      - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: pnpm
-      - uses: dtolnay/rust-toolchain@stable
-      - name: Install Linux dependencies
-        if: runner.os == 'Linux'
+      - name: Publish the release
+        shell: bash
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: apps/desktop/src-tauri
-          save-if: false
-      - run: pnpm install --frozen-lockfile
-      - uses: tauri-apps/tauri-action@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-        with:
-          projectPath: apps/desktop
-          tagName: app-v__VERSION__
-          releaseName: ArtyDog v__VERSION__
-          releaseDraft: false
-          prerelease: false
+          latest=$([[ "$GITHUB_REF_TYPE" == tag ]] && echo true || echo false)
+          gh api -X PATCH "repos/$GH_REPO/releases/$RELEASE_ID" \
+            -F draft=false -f make_latest="$latest" > /dev/null
+      # Releases published with the workflow token trigger no workflows, so the
+      # site's download links are refreshed here, once the assets exist.
+      - name: Redeploy the website
+        if: github.ref_type == 'tag'
+        run: gh workflow run website.yml --ref main
