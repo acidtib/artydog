@@ -60,6 +60,8 @@ jobs:
               exit 1
             fi
 
+            notes=$(node scripts/changelog.mjs section "$version")
+
             existing=$(gh api "repos/$GH_REPO/releases" --paginate \
               --jq ".[] | select(.tag_name == \"$tag\") | [.id, .draft] | @tsv" | head -n1)
             if [[ -n "$existing" ]]; then
@@ -68,9 +70,11 @@ jobs:
                 echo "$tag is already published" >&2
                 exit 1
               fi
+              gh api -X PATCH "repos/$GH_REPO/releases/$id" -f body="$notes" > /dev/null
             else
               id=$(gh api -X POST "repos/$GH_REPO/releases" \
-                -f tag_name="$tag" -f name="ArtyDog v$version" -F draft=true --jq .id)
+                -f tag_name="$tag" -f name="ArtyDog v$version" -f body="$notes" \
+                -F draft=true --jq .id)
             fi
           else
             tag=bleeding-edge
@@ -81,10 +85,15 @@ jobs:
             done
             gh api -X DELETE "repos/$GH_REPO/git/refs/tags/$tag" > /dev/null 2>&1 || true
 
+            body="Automated bleeding-edge build from $GITHUB_SHA."
+            unreleased=$(node scripts/changelog.mjs unreleased)
+            if [[ -n "$unreleased" ]]; then
+              body=$(printf '%s\n\n## Unreleased\n\n%s' "$body" "$unreleased")
+            fi
+
             id=$(gh api -X POST "repos/$GH_REPO/releases" \
               -f tag_name="$tag" -f target_commitish="$GITHUB_SHA" \
-              -f name="Bleeding-edge build" \
-              -f body="Automated bleeding-edge build from $GITHUB_SHA." \
+              -f name="Bleeding-edge build" -f body="$body" \
               -F draft=true -F prerelease=true --jq .id)
           fi
 
