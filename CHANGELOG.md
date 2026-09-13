@@ -1,3 +1,5 @@
+## ArtyDog 0.2.2 (September 13, 2026) ##
+
 *   Ignore Rust build output in the desktop dev server's file watcher, so
     cargo writes no longer trigger needless reloads.
 
