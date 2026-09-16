@@ -11,6 +11,7 @@ const asset = (file: string) => `${REPO}/releases/download/${TAG}/${file}`;
 const EXE = `ArtyDog_${VERSION}_x64-setup.exe`;
 const APPIMAGE = `ArtyDog_${VERSION}_amd64.AppImage`;
 const DEB = `ArtyDog_${VERSION}_amd64.deb`;
+const LOGO = `${import.meta.env.BASE_URL}logo.png`;
 
 function Eyebrow({ children }: { children: string }) {
   return (
@@ -110,116 +111,6 @@ function Cross() {
   );
 }
 
-const GRID = Array.from({ length: 15 }, (_, i) => (i + 1) * 40);
-
-// Values match the verified SPH-2 test vector, 50,50 to 65,50.
-function OverlayScene() {
-  return (
-    <svg
-      viewBox="0 0 640 360"
-      role="img"
-      aria-label="The ArtyDog overlay showing a firing solution on top of the game map"
-      className="block h-auto w-full"
-    >
-      <defs>
-        <linearGradient id="scene-terrain" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#161b13" />
-          <stop offset="1" stopColor="#0b0c0a" />
-        </linearGradient>
-      </defs>
-      <rect width="640" height="360" fill="url(#scene-terrain)" />
-      <g stroke="#fff" strokeOpacity="0.06">
-        {GRID.map((x) => (
-          <line key={`v${x}`} x1={x} y1="0" x2={x} y2="360" />
-        ))}
-        {GRID.slice(0, 8).map((y) => (
-          <line key={`h${y}`} x1="0" y1={y} x2="640" y2={y} />
-        ))}
-      </g>
-
-      <path
-        d="M120 240 Q240 104 360 240"
-        fill="none"
-        stroke="#34d399"
-        strokeOpacity="0.8"
-        strokeWidth="1.5"
-        strokeDasharray="4 5"
-      />
-      <rect
-        x="113"
-        y="233"
-        width="14"
-        height="14"
-        rx="2"
-        fill="#34d399"
-        fillOpacity="0.2"
-        stroke="#34d399"
-        strokeWidth="1.5"
-      />
-      <text x="120" y="268" textAnchor="middle" fontSize="10" fontWeight="600" letterSpacing="1.5" fill="#a3a3a3">
-        ARTILLERY
-      </text>
-      <g stroke="#f59e0b" strokeWidth="1.5" fill="none">
-        <circle cx="360" cy="240" r="9" />
-        <line x1="360" y1="226" x2="360" y2="254" />
-        <line x1="346" y1="240" x2="374" y2="240" />
-      </g>
-      <text x="360" y="272" textAnchor="middle" fontSize="10" fontWeight="600" letterSpacing="1.5" fill="#a3a3a3">
-        TARGET
-      </text>
-
-      <g>
-        <rect x="404" y="20" width="216" height="150" rx="6" fill="#0d0d0d" fillOpacity="0.96" stroke="#34d399" strokeOpacity="0.45" />
-        <line x1="404" y1="46" x2="620" y2="46" stroke="#262626" />
-        <text x="417" y="37" fontSize="9" fontWeight="700" letterSpacing="2" fill="#d4d4d4">
-          ARTYDOG
-        </text>
-        <text x="607" y="37" textAnchor="end" fontSize="8" fontWeight="600" letterSpacing="1" fill="#737373">
-          IN RANGE
-        </text>
-        <line x1="404" y1="88" x2="620" y2="88" stroke="#1f1f1f" />
-        <line x1="404" y1="128" x2="620" y2="128" stroke="#1f1f1f" />
-        {(
-          [
-            ["DISTANCE", "1500 m", "", 73],
-            ["AZIMUTH", "90.0°", " E", 113],
-            ["ELEVATION", "84 mil", "", 153],
-          ] as const
-        ).map(([label, value, suffix, y]) => (
-          <g key={label}>
-            <text x="417" y={y - 3} fontSize="8.5" fontWeight="700" letterSpacing="1" fill="#a3a3a3">
-              {label}
-            </text>
-            <text x="607" y={y} textAnchor="end" fontSize="18" fontWeight="700" fill="#34d399" className="font-mono">
-              {value}
-              <tspan fontSize="10" fillOpacity="0.6">
-                {suffix}
-              </tspan>
-            </text>
-          </g>
-        ))}
-      </g>
-
-      <g fontSize="11" className="font-mono">
-        <rect x="20" y="318" width="34" height="22" rx="4" fill="#262626" stroke="#404040" />
-        <text x="37" y="333" textAnchor="middle" fill="#e5e5e5">
-          Alt
-        </text>
-        <text x="63" y="333" textAnchor="middle" fill="#737373">
-          +
-        </text>
-        <rect x="72" y="318" width="24" height="22" rx="4" fill="#262626" stroke="#404040" />
-        <text x="84" y="333" textAnchor="middle" fill="#e5e5e5">
-          M
-        </text>
-        <text x="106" y="333" fill="#a3a3a3">
-          shows and hides it
-        </text>
-      </g>
-    </svg>
-  );
-}
-
 const linkClass =
   "text-neutral-300 underline decoration-neutral-700 underline-offset-4 transition-colors hover:text-emerald-400 hover:decoration-emerald-400";
 
@@ -292,8 +183,9 @@ export default function App() {
         <div className="mx-auto flex h-14 max-w-6xl items-center gap-6 px-6">
           <a
             href="#top"
-            className="font-display text-lg font-semibold uppercase tracking-[0.18em] text-neutral-200 transition-colors hover:text-emerald-400"
+            className="flex items-center gap-2.5 font-display text-lg font-semibold uppercase tracking-[0.18em] text-neutral-200 transition-colors hover:text-emerald-400"
           >
+            <img src={LOGO} alt="" className="h-7 w-7" />
             ArtyDog
           </a>
           <nav
@@ -325,27 +217,27 @@ export default function App() {
         {/* Hero */}
         <section className="relative overflow-hidden">
           <div aria-hidden="true" className="hero-grid absolute inset-0" />
-          <div className="relative mx-auto max-w-6xl px-6 pb-14 pt-14 sm:pb-20 sm:pt-20 md:pt-28">
-            <div className="mx-auto max-w-3xl text-center">
+          <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-6 py-14 sm:py-20 lg:grid-cols-[1.1fr_1fr] lg:gap-16 lg:py-24">
+            <div className="max-w-3xl text-center lg:text-left">
               <p className="font-mono text-xs uppercase tracking-[0.2em] text-amber-500 sm:tracking-[0.35em]">
                 Artillery calculator for WARDOGS
               </p>
-              <h1 className="mt-5 font-display text-[clamp(3.2rem,8vw,6.5rem)] font-bold uppercase leading-[0.95] tracking-[0.01em] text-neutral-100">
+              <h1 className="mt-5 font-display text-[clamp(2.75rem,6vw,4.75rem)] font-bold uppercase leading-[0.95] tracking-[0.01em] text-neutral-100">
                 Put rounds{" "}
                 <span className="block">
                   <span className="text-emerald-400">on target</span>.
                 </span>
               </h1>
-              <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-neutral-400 sm:text-lg">
+              <p className="mt-6 text-base leading-relaxed text-neutral-400 sm:text-lg">
                 Stop guessing your shots. Enter your artillery and target grids
                 and get the exact distance, azimuth and mil elevation to land
                 them with the L81 Mortar or SPH-2.
               </p>
-              <p className="mx-auto mt-3 max-w-2xl text-base leading-relaxed text-neutral-300 sm:text-lg">
-                Run it as an overlay on top of the game, or use it right here in
-                your browser.
+              <p className="mt-3 text-base leading-relaxed text-neutral-300 sm:text-lg">
+                Run it as an overlay on top of the game, or dial one in right
+                here in your browser.
               </p>
-              <div className="mx-auto mt-8 flex max-w-sm flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center">
+              <div className="mx-auto mt-8 flex max-w-sm flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center lg:mx-0 lg:justify-start">
                 <a href="#download" className={primaryButton}>
                   Download the overlay
                 </a>
@@ -358,28 +250,8 @@ export default function App() {
               </p>
             </div>
 
-            <div className="mx-auto mt-14 max-w-5xl sm:mt-20">
-              <DemoVideo />
-            </div>
-
-            <div id="calculator" className="mt-16 scroll-mt-6 sm:mt-24">
-              <div className="text-center">
-                <p className="flex items-center justify-center gap-2 font-mono text-xs uppercase tracking-[0.2em] text-emerald-400">
-                  <span
-                    aria-hidden="true"
-                    className="pulse-dot h-1.5 w-1.5 rounded-full bg-emerald-500"
-                  />
-                  Try it now · no download
-                </p>
-                <h2 className="mt-3 font-display text-3xl font-semibold uppercase tracking-[0.01em] text-balance text-neutral-100 sm:text-4xl">
-                  Or use it right here.
-                </h2>
-                <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-neutral-400">
-                  This is the real calculator. Enter your artillery and target
-                  grids and the solution appears as you type.
-                </p>
-              </div>
-              <div className="mt-8 flex justify-center">
+            <div id="calculator" className="scroll-mt-6 justify-self-center">
+              <div className="mt-6 flex justify-center">
                 <DemoCalculator version={VERSION} />
               </div>
             </div>
@@ -389,8 +261,8 @@ export default function App() {
         {/* How it works */}
         <section className="border-t border-tool-hairline">
           <div className="mx-auto grid max-w-6xl items-center gap-10 px-6 py-14 sm:py-20 lg:grid-cols-[1.15fr_1fr] lg:gap-16">
-            <div className="order-2 overflow-hidden rounded-[8px] border border-tool-border shadow-[0_30px_60px_-20px_rgba(0,0,0,0.9)] lg:order-1">
-              <OverlayScene />
+            <div className="order-2 lg:order-1">
+              <DemoVideo />
             </div>
 
             <div className="order-1 lg:order-2">
@@ -578,7 +450,8 @@ export default function App() {
       <footer className="border-t border-tool-hairline">
         <div className="mx-auto max-w-6xl px-6 py-10">
           <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
-            <span className="font-display text-base font-semibold uppercase tracking-[0.18em] text-neutral-300">
+            <span className="flex items-center gap-2.5 font-display text-base font-semibold uppercase tracking-[0.18em] text-neutral-300">
+              <img src={LOGO} alt="" className="h-6 w-6" />
               ArtyDog
             </span>
             <span className="text-sm text-neutral-500">
